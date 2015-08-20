@@ -1,0 +1,7 @@
+.idea
+/composer.lock
+/config/db.php
+/web/assets
+/web/files
+/web/images
+
