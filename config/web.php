@@ -45,6 +45,11 @@ $config = [
         'db' => require(__DIR__ . '/db.php'),
     ],
     'params' => $params,
+    'modules' => [
+        'map' => [
+            'class' => 'app\modules\map\Module',
+        ],
+    ],
 ];
 
 if (YII_ENV_DEV) {
@@ -57,6 +62,7 @@ if (YII_ENV_DEV) {
     $config['bootstrap'][] = 'gii';
     $config['modules']['gii'] = [
         'class' => 'yii\gii\Module',
+        'allowedIPs' => [$_SERVER['REMOTE_ADDR'], '127.0.0.1', '::1'],
     ];
 }
 
