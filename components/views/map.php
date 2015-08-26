@@ -15,7 +15,7 @@ MapAsset::register($this);
         .attr("width", width)
         .attr("height", height);
 
-    d3.json("http://punka.ru/json/russia.json", function(error, rus) {
+    d3.json("/json/russia.json", function(error, rus) {
         if (error) return console.error(error);
 
         var region = topojson.feature(rus, rus.objects.region).features;
