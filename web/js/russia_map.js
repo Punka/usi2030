@@ -24,7 +24,7 @@ var g_russia = canvas.append("g").attr("class", "map");
 render_title();
 
 // Render map
-d3.json("http://punka.ru/map/default/json", function(error, rus){
+d3.json("/map/default/json", function(error, rus){
     if (error) return console.error(error);
 
     // Tmp parent properties
