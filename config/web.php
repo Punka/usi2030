@@ -7,10 +7,16 @@ $config = [
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
     'components' => [
-	'urlManager' => [
-	    'enablePrettyUrl' => true,
-	    'showScriptName' => false,
-	],
+        'formatter' => [
+            //'dateFormat' => 'dd.MM.yyyy',
+            'decimalSeparator' => '.',
+            'thousandSeparator' => '',
+            //'currencyCode' => 'EUR',
+        ],
+        'urlManager' => [
+	        'enablePrettyUrl' => true,
+	        'showScriptName' => false,
+	    ],
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => '73SaGCY8A3qxN84uopw6obcVKrJOSX-d',
@@ -43,6 +49,13 @@ $config = [
             ],
         ],
         'db' => require(__DIR__ . '/db.php'),
+        'poiskstroek' => [
+            'class' => 'yii\db\Connection',
+            'dsn' => 'pgsql:host=psdb1.cdii5kanexo4.eu-west-1.rds.amazonaws.com;port=5432;dbname=poiskstroek20150907',
+            'username' => 'postgres',
+            'password' => 'CepDosoufoowwib9',
+            'charset' => 'utf8',
+        ],
     ],
     'params' => $params,
     'modules' => [
@@ -57,6 +70,7 @@ if (YII_ENV_DEV) {
     $config['bootstrap'][] = 'debug';
     $config['modules']['debug'] = [
         'class' => 'yii\debug\Module',
+        'allowedIPs' => [$_SERVER['REMOTE_ADDR'], '127.0.0.1', '::1'],
     ];
 
     $config['bootstrap'][] = 'gii';
