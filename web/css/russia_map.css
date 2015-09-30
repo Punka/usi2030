@@ -1,0 +1,174 @@
+.map-default-index {
+    margin:0;
+    padding: 0;
+    background-color: #f4f4f4;
+    font: bold 12px Trebuchet MS;
+    padding-bottom: 25px;
+    position: relative;
+
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    user-select: none;
+}
+
+.map-default-index svg {
+    background-color: #f4f4f4;
+    fill: #d1d7dc;
+    stroke: #60666b;
+    margin-top: 55px;
+}
+
+.map-default-index .header {
+    display: table;
+    position: absolute;
+    left: -10px;
+    top: 10px;
+}
+
+.map-default-index .header_title {
+    color: #303030;
+    display: table-cell;
+    vertical-align: middle;
+    font-size: 30px;
+    padding-left: 15px;
+}
+
+.map-default-index .flag {
+    display: table-cell;
+    cursor: pointer;
+}
+
+.map-default-index .button-back {
+    cursor: pointer;
+}
+
+.map-default-index .header_gerb {
+    height: 75px;
+    padding-left: 15px;
+}
+
+.map-default-index .footer, .map-default-index .footer .inform {
+    padding: 0;
+    margin: 0;
+    display: table;
+    width: 980px;
+}
+
+.map-default-index .footer_left, .map-default-index .footer_right {
+    display: table-cell;
+    width: 50%;
+}
+
+.map-default-index .footer .title {
+    font-size: 16px;
+    padding: 0 30px;
+    text-transform: uppercase;
+    list-style-type: none;
+
+    overflow: hidden;
+    height: 150px;
+}
+
+.map-default-index .footer .title.full {
+    overflow: auto;
+    height: 100%;
+}
+
+.map-default-index .footer .statistic {
+    border-bottom: 1px solid #d1d7dc;
+    display: table;
+    width: 100%;
+}
+
+.map-default-index .footer .statistic .left, .map-default-index .footer .statistic .right {
+    display: table-cell;
+    font-size: 16px;
+    font-weight: normal;
+    text-transform: none;
+    line-height: 1.3;
+    padding-top: 10px;
+}
+
+.map-default-index .footer .statistic .left {
+    color: #303030;
+    font-weight: normal;
+}
+
+.map-default-index .footer .statistic .right {
+    color: #287fc3;
+    font-weight: bold;
+    text-align: right;
+}
+
+.map-default-index .footer .button_more {
+    background-color: #3f95b9;
+    color: #fff;
+    cursor: pointer;
+    display: table;
+    font-size: 16px;
+    font-weight: normal;
+    margin: 15px auto 0;
+    padding: 5px 40px;
+    text-transform: uppercase;
+}
+
+.map-default-index .regions path:hover,
+.map-default-index .regions path.active,
+.map-default-index .districts path:hover,
+.map-default-index .districts path.active,
+.map-default-index .cities path:hover,
+.map-default-index .cities path.active
+{
+    cursor: pointer;
+    fill: #a1d568;
+}
+
+.map-default-index .boundary, .map-default-index .boundary:hover, .map-default-index .boundary:active {
+    fill: none;
+}
+
+.map-default-index .city circle {
+    fill: #3f92b9;
+    stroke: #fff;
+}
+
+.map-default-index .city circle:hover, .map-default-index .city circle.active {
+    stroke: #3f92b9;
+    fill: #fff;
+    cursor: pointer;
+}
+
+#label {
+    color: #fff;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: auto;
+    height: auto;
+    padding: 10px;
+    background-color: #3f95b9;
+    opacity: 0;
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+path.district {
+    display: none;
+}
+
+ul .left {
+    display: block;
+    float: left;
+    text-transform: none;
+}
+
+ul .right {
+    display: block;
+    float: right;
+}

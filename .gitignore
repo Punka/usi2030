@@ -1,7 +1,12 @@
+.gitignore
 .idea
 /composer.lock
 /config/db.php
+/config/poiskstroek.php
+/config/console.php
+/config/web.php
 /web/assets
 /web/files
 /web/images
-
+/misc/*.DBF
+/misc/*.CSV
