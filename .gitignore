@@ -8,5 +8,4 @@
 /web/assets
 /web/files
 /web/images
-/misc/*.DBF
-/misc/*.CSV
+/misc/*
