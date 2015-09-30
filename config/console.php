@@ -32,17 +32,7 @@ return [
             ],
         ],
         'db' => $db,
-<<<<<<< HEAD
-        'poiskstroek' => [
-            'class' => 'yii\db\Connection',
-            'dsn' => 'pgsql:host=psdb1.cdii5kanexo4.eu-west-1.rds.amazonaws.com;port=5432;dbname=poiskstroek20150907',
-            'username' => 'postgres',
-            'password' => 'CepDosoufoowwib9',
-            'charset' => 'utf8',
-        ],
-=======
         'poiskstroek' => require(__DIR__ . '/poiskstroek.php'),
->>>>>>> f12cfe7958a8f3bfb199b0c5cb2ba961829f6bfb
     ],
     'params' => $params,
 ];
