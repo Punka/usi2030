@@ -1,0 +1,9 @@
+<?php
+
+return [
+    'class' => 'yii\db\Connection',
+    'dsn' => 'mysql:host=usirf.ru;dbname=usi2030',
+    'username' => 'root',    'password' => 'sW5f3kDl',
+    'charset' => 'utf8',
+];
+
