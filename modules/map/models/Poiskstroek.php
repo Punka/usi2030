@@ -6,402 +6,396 @@ use Yii;
 use yii\db\Expression;
 use yii\i18n\Formatter;
 
-use app\models\Region;
-use app\models\District;
-use app\models\City;
+use app\models\Locality;
+use app\models\PoiskstroekData;
 
 class Poiskstroek {
 
-    public $json;
-
-    public function parseRegionData($json)
+	protected $russia, $data, $json_data, $name, $kladr_code, $construct_sum, $design_sum, $construct_count, $design_count, $construct_companies, $design_companies, $format, $value, $pattern;
+	
+    private function getConstructSum()
     {
-        $this->json = $json;
-        $json_districts = $json['objects']['district170915']['geometries'];
-        $json_city = $json['objects']['city']['geometries'];
-
-        $russia = Yii::$app->poiskstroek->createCommand("select sum(construction_objects_count) as construct_count, sum(construction_objects_sum) as construct_sum, sum(design_objects_count) as design_count, sum(design_objects_sum) as design_sum, sum(suppliers_count) as construct_companies, sum(designers_count) as design_companies from region limit 1;")->queryOne();
-        $regions = Yii::$app->poiskstroek->createCommand("select id, name, construction_objects_count as construct_count, construction_objects_sum as construct_sum, design_objects_count as design_count, design_objects_sum as design_sum, suppliers_count as construct_companies, designers_count as design_companies from region where actual = true;")->queryAll();
-
-        $russia['name'] = "Российская Федерация";
-        $this->addRegion(100, $russia);
-
-        foreach($regions as $region)
+        $this->construct_sum = Yii::$app->poiskstroek->createCommand("SELECT COALESCE(SUM(contract_price), 0.00) as sum FROM object WHERE actual = TRUE AND checked = TRUE AND type = '1' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$this->kladr_code}%'")->queryOne();
+        $this->construct_sum = Yii::$app->formatter->asDecimal($this->construct_sum['sum'], 2);
+        
+        return $this->construct_sum;
+    }
+    
+    private function getDesignSum()
+    {
+        $this->design_sum = Yii::$app->poiskstroek->createCommand("SELECT COALESCE(SUM(contract_price), 0.00) as sum FROM object WHERE actual = TRUE AND checked = TRUE AND type = '2' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$this->kladr_code}%'")->queryOne();
+        $this->design_sum = Yii::$app->formatter->asDecimal($this->design_sum['sum'], 2);
+        
+        return $this->design_sum;
+    }
+    
+    private function getConstructCount()
+    {
+        $this->construct_count = Yii::$app->poiskstroek->createCommand("SELECT COUNT(id) FROM object WHERE actual = TRUE AND checked = TRUE AND type = '1' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$this->kladr_code}%'")->queryOne();
+        $this->construct_count = $this->construct_count['count'];
+        
+        return $this->construct_count;
+    }
+    
+    private function getDesignCount()
+    {
+        $this->design_count = Yii::$app->poiskstroek->createCommand("SELECT COUNT(id) FROM object WHERE actual = TRUE AND checked = TRUE AND type = '2' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$this->kladr_code}%'")->queryOne();
+        $this->design_count = $this->design_count['count'];
+        
+        return $this->design_count;
+    }
+    
+    private function getConstructCompanies()
+    {
+        $this->construct_companies = Yii::$app->poiskstroek->createCommand("SELECT COUNT(DISTINCT(contract_supplier_id)) FROM object WHERE actual = '1' AND checked = '1' AND contract_stage = '3' AND contract_supplier_id IS NOT NULL AND kladr_code LIKE '{$this->kladr_code}%'")->queryOne();
+        $this->construct_companies = $this->construct_companies['count'];
+        
+        return $this->construct_companies;
+    }
+    
+    private function getDesignCompanies()
+    {
+        $this->design_companies = Yii::$app->poiskstroek->createCommand("SELECT COUNT(DISTINCT(contract_designer_id )) FROM object WHERE actual = '1' AND checked = '1' AND contract_stage = '3' AND contract_designer_id  IS NOT NULL AND kladr_code LIKE '{$this->kladr_code}%'")->queryOne();
+        $this->design_companies = $this->design_companies['count'];
+        
+        return $this->design_companies;
+    }
+	
+	private function getImg($path)
+	{
+		if(file_exists($_SERVER['DOCUMENT_ROOT'] . $path))
+		{
+			return $path;
+		}
+		else
+		{
+			return "/images/map/100.png";
+		}
+	}
+	
+	public function parseLocality($json)
+    {
+        $this->district_data = $json['objects']['district']['geometries'];
+        $this->city_data = $json['objects']['city']['geometries'];
+        
+        $this->region_data = Yii::$app->poiskstroek->createCommand("select id, name from region where actual = true;")->queryAll();
+        
+        foreach($this->region_data as $region)
         {
-            $this->addRegion($region['id'], $region);
-
-            for($i = 0; $i < count($json_districts); $i++)
+			$this->addRegion($region);
+        }
+        unset($this->region_data);
+        
+        foreach($this->district_data as $district)
+        {
+            if(isset($district['properties']))
             {
-                if(isset($json_districts[$i]['properties']['KLADR_CODE']) and $json_districts[$i]['properties']['REG_ID'] == $region['id'])
+                $this->addLocality($district['properties']);
+            }
+        }
+        unset($this->district_data);
+        
+        foreach($this->city_data as $city['properties'])
+        {
+            if(isset($city['properties']))
+            {
+                $this->addLocality($city['properties']);
+            }
+        }
+        unset($this->city_data);
+    }
+    
+    public function parseData()
+    {
+        $this->addRussiaData();
+        
+        $this->data = Locality::find()->where("kladr_code is not null")->asArray()->all();
+       
+        if(count($this->data) > 0)
+        {
+            foreach($this->data as $value)
+            {
+                $this->addLocalityData($value);
+            }
+        }
+        
+        unset($this->data);
+    }
+    
+    private function getData($kladr_code)
+    {
+        $array = array();
+          
+        if($model = PoiskstroekData::find()->where(['kladr_code' => $kladr_code])->one())
+        {
+            $array['name'] = $model->name;
+            $array['construct_sum'] = $this->getCompactSum($model->construct_sum);
+            $array['design_sum'] = $this->getCompactSum($model->design_sum);
+            $array['construct_count'] = $this->getFormatObjects($model->construct_count);
+            $array['design_count'] = $this->getFormatObjects($model->design_count);
+            $array['construct_companies'] = $this->getFormatCompany($model->construct_companies);
+            $array['design_companies'] = $this->getFormatCompany($model->design_companies);
+            $array['img'] = $this->getImg($model->img);
+			
+			if($kladr_code != 100) $array['kladr_code'] = $kladr_code;
+            
+            if($model->name == 'Сургут')
+                        $array['link'] = "http://surgut2030.usirf.ru";
+        }
+                
+        unset($model, $kladr_code);
+            
+        return $array;
+    }
+    
+    
+    private function getLocalityData($json_data)
+    {
+        $this->json_data = $json_data;
+        
+        $array = array();
+        
+        for($i = 0; $i <= count($this->json_data); $i++)
+        {
+			if(isset($this->json_data[$i]['properties']['kladr_code']))
+            {
+                $this->kladr_code = $this->json_data[$i]['properties']['kladr_code'];
+				
+				if($value = $this->getData($this->kladr_code)) $array[$this->kladr_code] = $value;
+				
+				unset($this->kladr_code, $value);
+            }
+        }
+        
+        unset($this->json_data);
+        
+        return $array;
+    }
+    
+    public function getPoiskstroekData($json)
+    {
+        $this->data = array();
+		
+        $this->data['russia'] = $this->getData(100);
+		
+        $this->data += $this->getLocalityData($json['objects']['region']['geometries']);
+        $this->data += $this->getLocalityData($json['objects']['district']['geometries']);
+        $this->data += $this->getLocalityData($json['objects']['city']['geometries']);
+		
+        unset($json);
+        
+        return $this->data;
+    }
+	
+	private function addRegion($data)
+    {
+        if(isset($data['id']))
+        {
+            $this->kladr_code = str_pad($data['id'], 2, "0", STR_PAD_LEFT);
+            
+            if(!$model = Locality::find()->where(['kladr_code' => $this->kladr_code])->one())
+            {
+                $model = new Locality();
+
+                $model->level = 1;
+                $model->kld_subjcode = $data['id'];
+                $model->kladr_code = $this->kladr_code;
+                $model->name = $data['name'];
+                $model->status = true;
+
+                if($model->save())
                 {
-                    $this->addDistrict($json_districts[$i]['properties']);
+                    echo "Добавлен регион: " . $data['name'] . "\n";
                 }
-            }
-
-            for($i = 0; $i < count($json_city); $i++)
-            {
-                if(isset($json_city[$i]['properties']['KLADR_CODE']) and $json_city[$i]['properties']['REG_ID'] == $region['id'])
+                else
                 {
-                    $this->addCity($json_city[$i]['properties']);
+                    echo "Error! Добавлен регион: " . $data['name'] . "\n";
+                } 
+            }
+        }
+        
+        unset($this->kladr_code, $data, $model);
+    }
+    
+    private function addLocality($data)
+    {
+        if(!isset($data['name'])) return false;
+            
+        if(isset($data['kladr_code']))
+        {
+            if(!$model = Locality::find()->where(['kladr_code' => $data['kladr_code']])->one())
+            {
+                $this->kld_subjcode = $data['kld_subjcode'];
+                $this->kld_regcode = $data['kld_regcode'];
+                $this->kld_citycode = $data['kld_citycode'];
+                    
+                $model = new Locality();
+               
+                $model->level = 2;
+                $model->kld_subjcode = $this->kld_subjcode;
+                $model->kld_regcode = $this->kld_regcode;
+                $model->kld_citycode = $this->kld_citycode;
+                $model->kladr_code = $data['kladr_code'];
+                $model->name = $data['name'];
+                $model->status = true;
+
+                if($model->save())
+                {
+                    echo "Добавлен район: " . $data['name'] . "\n";
                 }
-            }
-        }
-    }
-
-    private function addRegion($id, $data)
-    {
-        if($r_model = Region::findOne($id))
-        {
-            $r_model->name = $data['name'];
-            $r_model->construct_sum = $data['construct_sum'];
-            $r_model->design_sum = $data['design_sum'];
-            $r_model->construct_count = $data['construct_count'];
-            $r_model->design_count = $data['design_count'];
-            $r_model->construct_companies = $data['construct_companies'];
-            $r_model->img = "/images/map/flag_" . $id . ".png";
-            $r_model->design_companies = $data['design_companies'];
-            $r_model->updated = new Expression('NOW()');
-
-            if($r_model->save())
-            {
-                echo "Обновлен регион " . $id . "\n";
-            }
-            else
-            {
-                echo "Error! Обновлен регион " . $id . "\n";
+                else
+                {
+                    echo "Error! Добавлен район: " . $data['name'] . "\n";
+                }
+                
+                unset($this->kld_subjcode, $this->kld_regcode, $this->kld_citycode, $data, $model);
             }
         }
         else
         {
-            $r_model = new Region();
-
-            $r_model->id = $id;
-            $r_model->name = $data['name'];
-            $r_model->construct_sum = $data['construct_sum'];
-            $r_model->design_sum = $data['design_sum'];
-            $r_model->construct_count = $data['construct_count'];
-            $r_model->design_count = $data['design_count'];
-            $r_model->construct_companies = $data['construct_companies'];
-            $r_model->design_companies = $data['design_companies'];
-            $r_model->img = "/images/map/flag_" . $id . ".png";
-            $r_model->created = new Expression('NOW()');
-            $r_model->updated = new Expression('NOW()');
-
-            if($r_model->save())
+            if(!$model = Locality::find()->where(['name' => $data['name'], 'kld_subjcode' => $data['kld_subjcode']])->one())
             {
-                echo "Добавлен регион " . $id . "\n";
-            }
-            else
-            {
-                echo "Error! Добавлен регион " . $id . "\n";
+                $model = new Locality();
+               
+                $model->level = 2;
+                $model->kld_subjcode = $data['kld_subjcode'];
+                $model->name = $data['name'];
+                $model->status = false;
+
+                if($model->save())
+                {
+                    echo "Добавлен район: " . $data['name'] . "\n";
+                }
+                else
+                {
+                    echo "Error! Добавлен район: " . $data['name'] . "\n";
+                }
+                
+                unset($data, $model);
             }
         }
     }
-
-    private function addDistrict($data)
+    
+    private function addData()
     {
-        $region_id = $data['REG_ID'];
-        $kladr_code = $data['KLADR_CODE'];
-        $name = $data['OKTMO_NAME'];
-        $construct_sum = Yii::$app->poiskstroek->createCommand("SELECT COALESCE(SUM(contract_price), 0.00) as sum FROM object WHERE actual = TRUE AND checked = TRUE AND type = '1' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
-        $construct_sum = Yii::$app->formatter->asDecimal($construct_sum['sum'], 2);
-        $design_sum = Yii::$app->poiskstroek->createCommand("SELECT COALESCE(SUM(contract_price), 0.00) as sum FROM object WHERE actual = TRUE AND checked = TRUE AND type = '2' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
-        $design_sum = Yii::$app->formatter->asDecimal($design_sum['sum'], 2);
-        $construct_count = Yii::$app->poiskstroek->createCommand("SELECT COUNT(id) FROM object WHERE actual = TRUE AND checked = TRUE AND type = '1' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
-        $construct_count = $construct_count['count'];
-        $design_count = Yii::$app->poiskstroek->createCommand("SELECT COUNT(id) FROM object WHERE actual = TRUE AND checked = TRUE AND type = '2' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
-        $design_count = $design_count['count'];
-        $construct_companies = Yii::$app->poiskstroek->createCommand("SELECT COUNT(DISTINCT(contract_supplier_id)) FROM object WHERE actual = '1' AND checked = '1' AND contract_stage = '3' AND contract_supplier_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
-        $construct_companies = $construct_companies['count'];
-        $design_companies = Yii::$app->poiskstroek->createCommand("SELECT COUNT(DISTINCT(contract_designer_id )) FROM object WHERE actual = '1' AND checked = '1' AND contract_stage = '3' AND contract_designer_id  IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
-        $design_companies = $design_companies['count'];
+        $model = new PoiskstroekData();
 
-        if($d_model = District::find()->where(['kladr_code' => $kladr_code])->one())
+        $model->kladr_code = $this->kladr_code;
+        $model->name = $this->name;
+        $model->construct_sum = $this->construct_sum;
+        $model->design_sum = $this->design_sum;
+        $model->construct_count = $this->construct_count;
+        $model->design_count = $this->design_count;
+        $model->construct_companies = $this->construct_companies;
+        $model->design_companies = $this->design_companies;
+        $model->img = "/images/map/" . $this->kladr_code . ".png";
+        $model->created = new Expression('NOW()');
+        $model->updated = new Expression('NOW()');
+
+        if($model->save())
         {
-            $d_model->region_id = $region_id;
-            $d_model->kladr_code = $kladr_code;
-            $d_model->name = $name;
-            $d_model->construct_sum = $construct_sum;
-            $d_model->design_sum = $design_sum;
-            $d_model->construct_count = $construct_count;
-            $d_model->design_count = $design_count;
-            $d_model->construct_companies = $construct_companies;
-            $d_model->design_companies = $design_companies;
-            $d_model->img = "/images/map/gerb_" . $kladr_code . ".png";
-            $d_model->created = new Expression('NOW()');
-            $d_model->updated = new Expression('NOW()');
-
-            if($d_model->save())
-            {
-                echo "Обновлен район: " . $name . "\n";
-            }
-            else
-            {
-                echo "Error! Обновлен район: " . $name . "\n";
-            }
+            echo "Добавлена информация по: " . $this->name . "\n";
         }
         else
         {
-            $d_model = new District();
-
-            $d_model->region_id = $region_id;
-            $d_model->kladr_code = $kladr_code;
-            $d_model->name = $name;
-            $d_model->construct_sum = $construct_sum;
-            $d_model->design_sum = $design_sum;
-            $d_model->construct_count = $construct_count;
-            $d_model->design_count = $design_count;
-            $d_model->construct_companies = $construct_companies;
-            $d_model->design_companies = $design_companies;
-            $d_model->img = "/images/map/gerb_" . $kladr_code . ".png";
-            $d_model->created = new Expression('NOW()');
-            $d_model->updated = new Expression('NOW()');
-
-            if($d_model->save())
-            {
-                echo "Добавлен район: " . $name . "\n";
-            }
-            else
-            {
-                echo "Error! Добавлен район: " . $name . "\n";
-            }
+            echo "Error! Добавлена информация по: " . $this->name . "\n";
         }
+		
+		unset($model);
     }
-
-    private function addCity($data)
+    
+    private function addRussiaData()
     {
-        $region_id = $data['REG_ID'];
-        $kladr_code = $data['KLADR_CODE'];
-        $name = $data['NAME'];
-        $construct_sum = Yii::$app->poiskstroek->createCommand("SELECT COALESCE(SUM(contract_price), 0.00) as sum FROM object WHERE actual = TRUE AND checked = TRUE AND type = '1' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
-        $construct_sum = Yii::$app->formatter->asDecimal($construct_sum['sum'], 2);
-        $design_sum = Yii::$app->poiskstroek->createCommand("SELECT COALESCE(SUM(contract_price), 0.00) as sum FROM object WHERE actual = TRUE AND checked = TRUE AND type = '2' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
-        $design_sum = Yii::$app->formatter->asDecimal($design_sum['sum'], 2);
-        $construct_count = Yii::$app->poiskstroek->createCommand("SELECT COUNT(id) FROM object WHERE actual = TRUE AND checked = TRUE AND type = '1' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
-        $construct_count = $construct_count['count'];
-        $design_count = Yii::$app->poiskstroek->createCommand("SELECT COUNT(id) FROM object WHERE actual = TRUE AND checked = TRUE AND type = '2' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
-        $design_count = $design_count['count'];
-        $construct_companies = Yii::$app->poiskstroek->createCommand("SELECT COUNT(DISTINCT(contract_supplier_id)) FROM object WHERE actual = '1' AND checked = '1' AND contract_stage = '3' AND contract_supplier_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
-        $construct_companies = $construct_companies['count'];
-        $design_companies = Yii::$app->poiskstroek->createCommand("SELECT COUNT(DISTINCT(contract_designer_id )) FROM object WHERE actual = '1' AND checked = '1' AND contract_stage = '3' AND contract_designer_id  IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
-        $design_companies = $design_companies['count'];
-
-        if($c_model = City::find()->where(['kladr_code' => $kladr_code])->one())
+        $this->russia = Yii::$app->poiskstroek->createCommand("select sum(construction_objects_count) as construct_count, sum(construction_objects_sum) as construct_sum, sum(design_objects_count) as design_count, sum(design_objects_sum) as design_sum, sum(suppliers_count) as construct_companies, sum(designers_count) as design_companies from region limit 1;")->queryOne();
+        
+        if($this->russia)
         {
-            $c_model->region_id = $region_id;
-            $c_model->kladr_code = $kladr_code;
-            $c_model->name = $name;
-            $c_model->construct_sum = $construct_sum;
-            $c_model->design_sum = $design_sum;
-            $c_model->construct_count = $construct_count;
-            $c_model->design_count = $design_count;
-            $c_model->construct_companies = $construct_companies;
-            $c_model->design_companies = $design_companies;
-            $c_model->img = "/images/map/gerb_" . $kladr_code . ".png";
-            $c_model->created = new Expression('NOW()');
-            $c_model->updated = new Expression('NOW()');
-
-            if($c_model->save())
+            $this->name = "Российская Федерация";
+            $this->kladr_code = "100";
+            
+            if(!$model = PoiskstroekData::find()->where(['kladr_code' => $this->kladr_code])->one())
             {
-                echo "Обновлен город: " . $name . "\n";
-            }
-            else
-            {
-                echo "Error! Обновлен город: " . $name . "\n";
+                $this->construct_sum = $this->russia['construct_sum'];
+                $this->design_sum = $this->russia['design_sum'];
+                $this->construct_count = $this->russia['construct_count'];
+                $this->design_count = $this->russia['design_count'];
+                $this->construct_companies = $this->russia['construct_companies'];
+                $this->design_companies = $this->russia['design_companies'];
+                
+                $this->addData();
+                
+                unset($this->construct_sum, $this->design_sum, $this->construct_count, $this->design_count, $this->construct_companies, $this->design_companies);
             }
         }
-        else
-        {
-            $c_model = new City();
-
-            $c_model->region_id = $region_id;
-            $c_model->kladr_code = $kladr_code;
-            $c_model->name = $name;
-            $c_model->construct_sum = $construct_sum;
-            $c_model->design_sum = $design_sum;
-            $c_model->construct_count = $construct_count;
-            $c_model->design_count = $design_count;
-            $c_model->construct_companies = $construct_companies;
-            $c_model->design_companies = $design_companies;
-            $c_model->img = "/images/map/gerb_" . $kladr_code . ".png";
-            $c_model->created = new Expression('NOW()');
-            $c_model->updated = new Expression('NOW()');
-
-            if($c_model->save())
-            {
-                echo "Добавлен город: " . $name . "\n";
-            }
-            else
-            {
-                echo "Error! Добавлен город: " . $name . "\n";
-            }
-        }
+        
+        unset($this->russia, $this->name, $this->kladr_code);
     }
-
-    public function dataObject($json, $json2)
+    
+    private function addLocalityData($value)
     {
-        $json_regions = $json['objects']['region']['geometries'];
-        $json_districts = $json['objects']['district170915']['geometries'];
-        $json_city = $json['objects']['city']['geometries'];
-
-        $regions = Region::find()->all();
-        $districts = District::find()->all();
-        $cities = City::find()->all();
-
-        $reg = [];
-        $dist = [];
-        $town = [];
-
-        foreach($regions as $region)
+        $this->kladr_code = $value['kladr_code'];
+        $this->name = $value['name'];
+                
+        if(!$model = PoiskstroekData::find()->where(['kladr_code' => $this->kladr_code])->one())
         {
-            $reg[$region['id']]['name'] = $region['name'];
-            $reg[$region['id']]['construct_sum'] = $this->getCompactSum($region['construct_sum']);
-            $reg[$region['id']]['design_sum'] = $this->getCompactSum($region['design_sum']);
-            $reg[$region['id']]['construct_count'] = $this->getFormatObjects($region['construct_count']);
-            $reg[$region['id']]['design_count'] = $this->getFormatObjects($region['design_count']);
-            $reg[$region['id']]['construct_companies'] = $this->getFormatCompany($region['construct_companies']);
-            $reg[$region['id']]['design_companies'] = $this->getFormatCompany($region['design_companies']);
-            $reg[$region['id']]['img'] = $region['img'];
+            $this->construct_sum = $this->getConstructSum();
+            $this->design_sum = $this->getDesignSum();
+            $this->construct_count = $this->getConstructCount();
+            $this->design_count = $this->getDesignCount();
+            $this->construct_companies = $this->getConstructCompanies();
+            $this->design_companies = $this->getDesignCompanies();
+                    
+            $this->addData();
+
+            unset($this->construct_sum, $this->design_sum, $this->construct_count, $this->design_count, $this->construct_companies, $this->design_companies);
         }
 
-        foreach($districts as $district)
-        {
-            $dist[$district['kladr_code']]['name'] = $district['name'];
-            $dist[$district['kladr_code']]['construct_sum'] = $this->getCompactSum($district['construct_sum']);
-            $dist[$district['kladr_code']]['design_sum'] = $this->getCompactSum($district['design_sum']);
-            $dist[$district['kladr_code']]['construct_count'] = $this->getFormatObjects($district['construct_count']);
-            $dist[$district['kladr_code']]['design_count'] = $this->getFormatObjects($district['design_count']);
-            $dist[$district['kladr_code']]['construct_companies'] = $this->getFormatCompany($district['construct_companies']);
-            $dist[$district['kladr_code']]['design_companies'] = $this->getFormatCompany($district['design_companies']);
-            $dist[$district['kladr_code']]['img'] = $district['img'];
-        }
-
-        foreach($cities as $city)
-        {
-            $town[$city['kladr_code']]['name'] = $city['name'];
-            $town[$city['kladr_code']]['construct_sum'] = $this->getCompactSum($city['construct_sum']);
-            $town[$city['kladr_code']]['design_sum'] = $this->getCompactSum($city['design_sum']);
-            $town[$city['kladr_code']]['construct_count'] = $this->getFormatObjects($city['construct_count']);
-            $town[$city['kladr_code']]['design_count'] = $this->getFormatObjects($city['design_count']);
-            $town[$city['kladr_code']]['construct_companies'] = $this->getFormatCompany($city['construct_companies']);
-            $town[$city['kladr_code']]['design_companies'] = $this->getFormatCompany($city['design_companies']);
-            $town[$city['kladr_code']]['img'] = $city['img'];
-        }
-
-        $json['objects']['russia']['properties']['name'] = $reg[100]['name'];
-        $json['objects']['russia']['properties']['construct_sum'] = $reg[100]['construct_sum'];
-        $json['objects']['russia']['properties']['design_sum'] = $reg[100]['design_sum'];
-        $json['objects']['russia']['properties']['construct_count'] = $reg[100]['construct_count'];
-        $json['objects']['russia']['properties']['design_count'] = $reg[100]['design_count'];
-        $json['objects']['russia']['properties']['construct_companies'] = $reg[100]['construct_companies'];
-        $json['objects']['russia']['properties']['design_companies'] = $reg[100]['design_companies'];
-        $json['objects']['russia']['properties']['img'] = "/images/map/flag_100.png";
-
-        for($i = 0; $i < count($json_regions); $i++)
-        {
-            if(isset($json_regions[$i]['properties']['REG_ID']))
-            {
-                $region_id = $json_regions[$i]['properties']['REG_ID'];
-
-                $json['objects']['region']['geometries'][$i]['properties']['kladr_code'] = $region_id;
-                $json['objects']['region']['geometries'][$i]['properties']['name'] = $reg[$region_id]['name'];
-                $json['objects']['region']['geometries'][$i]['properties']['construct_sum'] = $reg[$region_id]['construct_sum'];
-                $json['objects']['region']['geometries'][$i]['properties']['design_sum'] = $reg[$region_id]['design_sum'];
-                $json['objects']['region']['geometries'][$i]['properties']['construct_count'] = $reg[$region_id]['construct_count'];
-                $json['objects']['region']['geometries'][$i]['properties']['design_count'] = $reg[$region_id]['design_count'];
-                $json['objects']['region']['geometries'][$i]['properties']['construct_companies'] = $reg[$region_id]['construct_companies'];
-                $json['objects']['region']['geometries'][$i]['properties']['design_companies'] = $reg[$region_id]['design_companies'];
-                $json['objects']['region']['geometries'][$i]['properties']['img'] = $reg[$region_id]['img'];
-            }
-        }
-
-        for($i = 0; $i < count($json_districts); $i++)
-        {
-            if(isset($json_districts[$i]['properties']['REG_ID']) and isset($json_districts[$i]['properties']['KLADR_CODE']))
-            {
-                $kladr_code = $json_districts[$i]['properties']['KLADR_CODE'];
-
-                $json['objects']['district170915']['geometries'][$i]['properties']['kladr_code'] = $kladr_code;
-                $json['objects']['district170915']['geometries'][$i]['properties']['name'] = $dist[$kladr_code]['name'];
-                $json['objects']['district170915']['geometries'][$i]['properties']['construct_sum'] = $dist[$kladr_code]['construct_sum'];
-                $json['objects']['district170915']['geometries'][$i]['properties']['design_sum'] = $dist[$kladr_code]['design_sum'];
-                $json['objects']['district170915']['geometries'][$i]['properties']['construct_count'] = $dist[$kladr_code]['construct_count'];
-                $json['objects']['district170915']['geometries'][$i]['properties']['design_count'] = $dist[$kladr_code]['design_count'];
-                $json['objects']['district170915']['geometries'][$i]['properties']['construct_companies'] = $dist[$kladr_code]['construct_companies'];
-                $json['objects']['district170915']['geometries'][$i]['properties']['design_companies'] = $dist[$kladr_code]['design_companies'];
-                $json['objects']['district170915']['geometries'][$i]['properties']['img'] = $dist[$kladr_code]['img'];
-            }
-        }
-
-        for($i = 0; $i < count($json_city); $i++)
-        {
-            if(isset($json_city[$i]['properties']['REG_ID']) and isset($json_city[$i]['properties']['KLADR_CODE']))
-            {
-                $kladr_code = $json_city[$i]['properties']['KLADR_CODE'];
-
-                $json['objects']['city']['geometries'][$i]['properties']['kladr_code'] = $kladr_code;
-                $json['objects']['city']['geometries'][$i]['properties']['name'] = $town[$kladr_code]['name'];
-                $json['objects']['city']['geometries'][$i]['properties']['construct_sum'] = $town[$kladr_code]['construct_sum'];
-                $json['objects']['city']['geometries'][$i]['properties']['design_sum'] = $town[$kladr_code]['design_sum'];
-                $json['objects']['city']['geometries'][$i]['properties']['construct_count'] = $town[$kladr_code]['construct_count'];
-                $json['objects']['city']['geometries'][$i]['properties']['design_count'] = $town[$kladr_code]['design_count'];
-                $json['objects']['city']['geometries'][$i]['properties']['construct_companies'] = $town[$kladr_code]['construct_companies'];
-                $json['objects']['city']['geometries'][$i]['properties']['design_companies'] = $town[$kladr_code]['design_companies'];
-                $json['objects']['city']['geometries'][$i]['properties']['img'] = $town[$kladr_code]['img'];
-
-                if($town[$kladr_code]['name'] == 'Сургут')
-                    $json['objects']['city']['geometries'][$i]['properties']['link'] = "http://surgut2030.usirf.ru";
-            }
-        }
-
-        $json[] = $json2;
-
-        return $json;
+        unset($this->kladr_code, $this->model, $value);
     }
 
     public function getCompactSum($value)
     {
-        $format = new Formatter();
-
-        if (empty($value)) {
-            return Yii::t('app', '{count} руб.', ['count' => $value]);
+        $this->value = $value;
+		$this->format = new Formatter();
+        
+        if ($this->value >= 1000000000000) {
+            $this->value = $this->format->asDecimal($this->value/1000000000000, 1);
+            return $this->value . " " . $this->getDeclensionWords($this->value, "триллион", "триллиона", "триллионов") . " руб.";
         }
-        if ($value > 1000000000000) {
-            $number = $format->asDecimal($value/1000000000000, 1);
-            return $number . " " . $this->getDeclensionWords($number, "триллион", "триллиона", "триллионов") . " руб.";
-
+        else if ($this->value >= 1000000000) {
+            $this->value = $this->format->asDecimal($this->value/1000000000, 1);
+            return $this->value . " " . $this->getDeclensionWords($this->value, "миллиард", "миллиарда", "миллиардов") . " руб.";
         }
-        if ($value > 1000000000) {
-            $number = $format->asDecimal($value/1000000000, 1);
-            return $number . " " . $this->getDeclensionWords($number, "миллиард", "миллиарда", "миллиардов") . " руб.";
-
+        else if ($this->value >= 1000000) {
+            $this->value = $this->format->asDecimal($this->value/1000000, 1);
+            return $this->value . " " . $this->getDeclensionWords($this->value, "миллион", "миллиона", "миллионов") . " руб.";
         }
-        if ($value > 1000000) {
-            $number = $format->asDecimal($value/1000000, 1);
-            return $number . " " . $this->getDeclensionWords($number, "миллион", "миллиона", "миллионов") . " руб.";
-
+        else if ($this->value >= 1000) {
+            $this->value = $this->format->asDecimal($this->value/1000, 1);
+            return $this->value . " " . $this->getDeclensionWords($this->value, "тысяча", "тысячи", "тысяч") . " руб.";
         }
-
-        return Yii::t('app', '{count} руб.', ['count' => $value]);
+        else {
+            return Yii::t('app', '{count} руб.', ['count' => $this->value]);
+        }
     }
 
     public function getFormatObjects($value)
     {
-        return $value . $this->getDeclensionWords($value, " объект", " объекта", " объектов");
+        return $value . " " . $this->getDeclensionWords($value, "объект", "объекта", "объектов");
     }
 
     public function getFormatCompany($value)
     {
-        return $value . $this->getDeclensionWords($value, " компания", " компании", " компаний");
+        return $value . " " . $this->getDeclensionWords($value, "компания", "компании", "компаний");
     }
 
     public function getDeclensionWords($value, $one, $few, $many, $language = "ru-RU")
     {
-        $language = $language;
-        $pattern = '{0, plural, =0{' . $many . '} =1{' . $one . '} one{' . $one . '} few{' . $few . '} many{' . $many . '} other{' . $many . '}}';
-        $params = ['0' => $value];
-        $formatter = new \MessageFormatter($language, $pattern);
-
-        return $formatter->format($params);
+		$this->pattern = "{0, plural, =0{" . $many . "} =1{" . $one . "} one{" . $one . "} few{" . $few . "} many{" . $many . "} other{" . $many . "}}";
+		$format = new \MessageFormatter($language, $this->pattern);
+        
+        unset($this->pattern);
+        
+        return $format->format(['0' => $value]);
     }
 }

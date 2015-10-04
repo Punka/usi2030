@@ -24,24 +24,59 @@ var g_russia = canvas.append("g").attr("class", "map");
 render_title();
 
 // Render map
-d3.json("/map/default/json", function(error, rus){
+//d3.json("/map/default/json-test", function(error, rus){
+d3.json("/json/map/russia_final.json", function(error, rus){
     if (error) return console.error(error);
+    
+    //localStorage.removeItem("map");
+    
+    var map = localStorage.getItem("map");
+    
+    if(map)
+    {
+        var data = JSON.parse(map);
+        
+        window.datas = data;
+        window.tmp_data = data.russia;
+        window.data_russia = data.russia;
 
-    // Tmp parent properties
-    window.tmp_data = rus.objects.russia.properties;
+        var boundary = topojson.feature(rus, rus.objects.boundary).features;
+        var data_r = topojson.feature(rus, rus.objects.region).features;
+        var data_c = topojson.feature(rus, rus.objects.city).features;
+        var data_d = topojson.feature(rus, rus.objects.district).features;
 
-    window.data_russia = rus.objects.russia.properties;
-    var boundary = topojson.feature(rus[0], rus[0].objects.boundary).features;
-    var data_r = topojson.feature(rus, rus.objects.region).features;
-    var data_c = topojson.feature(rus, rus.objects.city).features;
-    var data_d = topojson.feature(rus, rus.objects.district170915).features;
+        render_regions(data_r);
+        render_district(data_d);
+        render_boundary(boundary);
+        render_cities(data_c);
 
-    render_regions(data_r);
-    render_district(data_d);
-    render_boundary(boundary);
-    render_cities(data_c);
+        render_inform(data.russia.name, null, 1, data.russia);
+        
+    }
+    else
+    {
+        d3.json("/map/default/data", function(error, data){
+            if (error) return console.error(error);
+            
+            localStorage.setItem("map", JSON.stringify(data));
 
-    render_inform(data_russia.name, null, 1, data_russia);
+            window.datas = data;
+            window.tmp_data = data.russia;
+            window.data_russia = data.russia;
+
+            var boundary = topojson.feature(rus, rus.objects.boundary).features;
+            var data_r = topojson.feature(rus, rus.objects.region).features;
+            var data_c = topojson.feature(rus, rus.objects.city).features;
+            var data_d = topojson.feature(rus, rus.objects.district).features;
+
+            render_regions(data_r);
+            render_district(data_d);
+            render_boundary(boundary);
+            render_cities(data_c);
+
+            render_inform(data.russia.name, null, 1, data.russia);
+        });
+    }
 });
 
 // Cancel select path
@@ -52,7 +87,7 @@ function cancel()
         update_inform(tmp_data.name, null, 1, tmp_data);
     }else{
         d3.select(".districts").classed("fixed", false);
-        update_inform(tmp_data.NAME, null, 2, tmp_data);
+        update_inform(tmp_data.name, null, 2, tmp_data);
     }
 
     d3.selectAll("path,circle").classed("active", false);
@@ -62,8 +97,9 @@ function cancel()
 function zooming(d) {
     active.classed("active", false);
     active = d3.select(this).classed("active", true);
-
-    tmp_data = d.properties;
+    
+    var region_id = d.properties.kladr_code;
+    tmp_data = datas[region_id];
 
     var bounds = path.bounds(d),
         dx = bounds[1][0] - bounds[0][0],
@@ -77,11 +113,11 @@ function zooming(d) {
 
     d3.selectAll(".regions, .boundary, .city, text").style("display", "none");
 
-    d3.selectAll(".district_" + d.properties.REG_ID + ", .city_" + d.properties.REG_ID).style("display", "block");
+    d3.selectAll(".district_" + d.properties.kld_subjcode + ", .city_" + d.properties.kld_subjcode).style("display", "block");
 
     d3.selectAll("circle").attr("r", function(d){ return (6/scale); }).attr("stroke-width", function(d) {return (7/scale)/3;});
 
-    update_inform(d.properties.NAME, null, 2, tmp_data);
+    update_inform(tmp_data['name'], null, 2, tmp_data);
 }
 
 // Reset zooming region
@@ -97,7 +133,7 @@ function reset() {
 
     d3.selectAll(".district").style("display", "none");
 
-    d3.selectAll(".city, text").style("display", function(d){return (d.properties.PLACE == 'federal' || d.properties.NAME == 'Сургут') ? "block" : "none";});
+    d3.selectAll(".city, text").style("display", function(d){return (d.properties.place == 'federal' || d.properties.name == 'Сургут') ? "block" : "none";});
 
     d3.selectAll("circle").attr("r", 5).attr("stroke-width", function(d) {return 7/3;});
 
@@ -238,26 +274,34 @@ function render_regions(data){
         .append("path")
         .attr("d", path)
         .attr("class", "region")
-        .attr("region_id", function(d){ return d.properties.REG_ID; })
+        .attr("region_id", function(d){ return d.properties.kladr_code; })
         .on("mousemove", function(d){
+            var region_id = d.properties.kladr_code;
             d3.select("#label").transition().duration(300).style("opacity", 1);
-            d3.select("#label").style("left", (d3.event.layerX - 10) + 'px').style("top", (d3.event.layerY - 45) + 'px').text(d.properties.name);
+            d3.select("#label").style("left", (d3.event.layerX - 10) + 'px').style("top", (d3.event.layerY - 45) + 'px').text(datas[region_id]['name']);
 
             if(!d3.select(".regions").classed("fixed"))
-                update_inform(d.properties.NAME, this, 1, d.properties);
+            {
+                var region_id = d.properties.kladr_code;
+                update_inform(datas[region_id]['name'], this, 1, datas[region_id]);
+            }
+                
         })
         .on("mouseout", function(d){
             d3.select("#label").transition().duration(300).style("opacity", 0);
 
             if(!d3.select(".regions").classed("fixed"))
-                update_inform(data_russia.name, null, 1, data_russia);
+            {
+                update_inform(datas['russia']['name'], null, 1, datas['russia']);
+            }
+                
         })
         .on("dblclick", zooming)
         .on("click", function(d){
 
             if(d3.select(this).classed("active")){
                 d3.selectAll("path,circle").classed("active", false);
-                update_inform(data_russia.name, null, 1, data_russia);
+                update_inform(datas['russia']['name'], null, 1, datas['russia']);
                 d3.select(this).classed("active", false);
                 d3.select(".regions").classed("fixed", false);
             }
@@ -265,8 +309,8 @@ function render_regions(data){
             {
                 d3.selectAll("path,circle").classed("active", false);
                 d3.select(this).classed("active", true);
-                var region_id = d.properties.REG_ID;
-                update_inform(d.properties.NAME, this, 1, d.properties);
+                var region_id = d.properties.kladr_code;
+                update_inform(datas[region_id]['name'], this, 1, datas[region_id]);
                 d3.select(".regions").classed("fixed", true);
             }
         });
@@ -281,9 +325,9 @@ function render_district(data){
         .enter()
         .append("path")
         .attr("d", path)
-        .attr("class", function(d){ return "district district_" + d.properties.REG_ID; })
+        .attr("class", function(d){ return "district district_" + d.properties.kld_subjcode; })
         .on("mousemove", function(d){
-            var region_name = d.properties.NAME;
+            var region_name = d.properties.name;
 
             d3.select("#label")
                 .transition()
@@ -294,8 +338,8 @@ function render_district(data){
                 .style("top", (d3.event.layerY - 45) + 'px')
                 .text(region_name);
             if(!d3.select(".districts").classed("fixed")) {
-                var region_id = d.properties.REG_ID;
-                update_inform(d.properties.NAME, this, 2, d.properties);
+                var region_id = d.properties.kladr_code;
+                update_inform(datas[region_id]['name'], this, 2, datas[region_id]);
             }
         })
         .on("mouseout", function(d){
@@ -304,19 +348,19 @@ function render_district(data){
                 .duration(300)
                 .style("opacity", 0);
             if(!d3.select(".districts").classed("fixed")) {
-                var region_id = d.properties.REG_ID;
-                update_inform(tmp_data.NAME, this, 2, tmp_data);
+                update_inform(tmp_data.name, this, 2, tmp_data);
             }
         })
         .on("click", function(d){
             if(d3.select(this).classed("active")){
-                region_id = d.properties.REG_ID;
-                update_inform(tmp_data.NAME, null, 2, tmp_data);
+                var region_id = d.properties.kladr_code;
+                update_inform(tmp_data.name, null, 2, tmp_data);
                 d3.selectAll("path,circle").classed("active", false);
                 d3.select(".districts").classed("fixed", false);
             }
             else{
-                update_inform(d.properties.NAME, this, 2, d.properties);
+                var region_id = d.properties.kladr_code;
+                update_inform(datas[region_id]['name'], this, 2, datas[region_id]);
                 d3.selectAll("path,circle").classed("active", false);
                 d3.select(this).classed("active", true);
                 d3.select(".districts").classed("fixed", true);
@@ -334,17 +378,20 @@ function render_cities(data){
         .enter()
         .append("g")
         .attr("transform", function(d) { return "translate(" + projection([d.geometry.coordinates[0], d.geometry.coordinates[1]]) + ")"; })
-        .attr("class", function(d){return "city_" + d.properties.REG_ID;})
-        .style("display", function(d){return (d.properties.PLACE == 'federal' || d.properties.NAME == 'Сургут') ? "block" : "none";})
-        .classed({"city":true,"federal":( function(d){ return (d.properties.PLACE == 'federal') ? true : false})});
+        .attr("class", function(d){return "city_" + d.properties.kld_subjcode;})
+        .style("display", function(d){return (d.properties.place == 'federal' || d.properties.name == 'Сургут') ? "block" : "none";})
+        .classed({"city":true,"federal":( function(d){ return (d.properties.place == 'federal') ? true : false})});
 
     city.append("circle")
         .attr("r", 5)
         .attr("stroke-width", 2)
         .style("opacity", 0.75)
         .on("mousemove", function(d){
-            var region_name = d.properties.NAME;
-
+                    
+            var region_id = d.properties.kladr_code;
+    
+            
+            
             d3.select("#label")
                 .transition()
                 .duration(300)
@@ -352,17 +399,18 @@ function render_cities(data){
             d3.select("#label")
                 .style("left", (d3.event.layerX - 10) + 'px')
                 .style("top", (d3.event.layerY - 45) + 'px')
-                .text(region_name);
+                .text(datas[region_id]['name']);
 
             if(d3.select(".regions").style("display") != 'none'){
+                
                 if(!d3.select(".regions").classed("fixed")) {
-                    var region_id = d.properties.REG_ID;
-                    update_inform(d.properties.NAME, this, 1, d.properties);
+                    var region_id = d.properties.kladr_code;
+                    update_inform(datas[region_id]['name'], this, 1, datas[region_id]);
                 }
             }else{
                 if(!d3.select(".districts").classed("fixed")) {
-                    var region_id = d.properties.REG_ID;
-                    update_inform(d.properties.NAME, this, 2, d.properties);
+                    var region_id = d.properties.kladr_code;
+                    update_inform(datas[region_id]['name'], this, 2, datas[region_id]);
                 }
             }
 
@@ -374,13 +422,13 @@ function render_cities(data){
                 .style("opacity", 0);
             if(d3.select(".regions").style("display") != 'none'){
                 if(!d3.select(".regions").classed("fixed")) {
-                    var region_id = d.properties.REG_ID;
-                    update_inform(tmp_data.NAME, this, 1, tmp_data);
+                    var region_id = d.properties.kladr_code;
+                    update_inform(tmp_data.name, this, 1, tmp_data);
                 }
             }else{
                 if(!d3.select(".districts").classed("fixed")) {
-                    var region_id = d.properties.REG_ID;
-                    update_inform(tmp_data.NAME, this, 2, tmp_data);
+                    var region_id = d.properties.kladr_code;
+                    update_inform(tmp_data.name, this, 2, tmp_data);
                 }
             }
 
@@ -389,21 +437,23 @@ function render_cities(data){
             if(d3.select(".regions").style("display") != 'none'){
                 if(d3.select(this).classed("active")) {
                     d3.select(".regions").classed("fixed", false);
-                    update_inform(data_russia.NAME, null, 1, data_russia);
+                    update_inform(data_russia.name, null, 1, data_russia);
                     d3.selectAll("path,circle").classed("active", false);
                 }else {
-                    update_inform(d.properties.NAME, null, 1, d.properties);
+					var region_id = d.properties.kladr_code;
+                    update_inform(datas[region_id].name, null, 1, datas[region_id]);
                     d3.select(".regions").classed("fixed", true);
                     d3.selectAll("path,circle").classed("active", false);
                     d3.select(this).classed("active", true);
                 }
             }else{
                 if(d3.select(this).classed("active")) {
-                    update_inform(tmp_data.NAME, null, 2, tmp_data);
+                    update_inform(tmp_data.name, null, 2, tmp_data);
                     d3.selectAll("path,circle").classed("active", false);
                     d3.select(".districts").classed("fixed", false);
                 }else {
-                    update_inform(d.properties.NAME, null, 2, d.properties);
+					var region_id = d.properties.kladr_code;
+                    update_inform(datas[region_id].name, null, 2, datas[region_id]);
                     d3.selectAll("path,circle").classed("active", false);
                     d3.select(this).classed("active", true);
                     d3.select(".districts").classed("fixed", true);
@@ -411,14 +461,14 @@ function render_cities(data){
             }
         })
         .on("dblclick", function(d){
-            if(d.properties.NAME == 'Сургут') window.open('http://surgut2030.usirf.ru', '_blank');
+            if(d.properties.name == 'Сургут') window.open('http://surgut2030.usirf.ru', '_blank');
         })
-        .style("fill", function(d){ return (d.properties.NAME == 'Сургут') ? "red" : ""; });
+        .style("fill", function(d){ return (d.properties.name == 'Сургут') ? "red" : ""; });
 
     city.append("text")
         .attr("class", ".city_text")
         .attr("y", -8)
-        .text(function(d) { return d.properties.NAME; })
+        .text(function(d) { return d.properties.name; })
         .style("fill", "#000")
-        .style("display", function(d){return (d.properties.PLACE == 'federal' || d.properties.NAME == 'Сургут') ? "block" : "none";});
+        .style("display", function(d){return (d.properties.place == 'federal' || d.properties.name == 'Сургут') ? "block" : "none";});
 }
