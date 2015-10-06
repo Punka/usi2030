@@ -43,7 +43,7 @@
     cursor: pointer;
 }
 
-.map-default-index .header_gerb {
+.map-default-index .gerb {
     height: 75px;
     padding-left: 15px;
 }
@@ -118,25 +118,37 @@
 .map-default-index .districts path:hover,
 .map-default-index .districts path.active,
 .map-default-index .cities path:hover,
-.map-default-index .cities path.active
-{
+.map-default-index .cities path.active {
     cursor: pointer;
-    fill: #a1d568;
+	fill: #a1d568;
 }
 
-.map-default-index .boundary, .map-default-index .boundary:hover, .map-default-index .boundary:active {
+.map-default-index .boundary, 
+.map-default-index .boundary:hover, 
+.map-default-index .boundary:active {
     fill: none;
 }
 
-.map-default-index .city circle {
-    fill: #3f92b9;
-    stroke: #fff;
+.map-default-index circle {
+	fill: #3f92b9;
+	opacity: .75;
+	r: 5;
+	stroke: #fff;
+	stroke-width: 2;
 }
 
-.map-default-index .city circle:hover, .map-default-index .city circle.active {
-    stroke: #3f92b9;
-    fill: #fff;
-    cursor: pointer;
+.map-default-index circle:hover, .map-default-index circle.active {
+	cursor: pointer;
+	fill: #fff;
+	stroke: #3f92b9;
+}
+
+.map-default-index .city {
+	display: none;
+}
+
+.map-default-index .federal {
+	display: block;
 }
 
 #label {

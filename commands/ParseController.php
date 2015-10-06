@@ -41,4 +41,11 @@ class ParseController extends Controller
         
         unset($model);
     }
+	
+	public function actionCachePoiskstroekData()
+	{
+		$model = new Poiskstroek();
+		
+		$model->cachePoiskstroekData();
+	}
 }

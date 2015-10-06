@@ -21,15 +21,18 @@ class DefaultController extends Controller
         return $this->render('index');
     }
     
-    public function actionData()
+    public function actionData($id = null)
     {
-        $json = json_decode(file_get_contents($_SERVER['DOCUMENT_ROOT'] . "/json/map/russia_final.json"), true);
+		$cache = Yii::$app->cache;
+		
+		$json = json_decode(file_get_contents($_SERVER['DOCUMENT_ROOT'] . "/json/map/russia_final.json"), true);
         
         $model = new Poiskstroek();
         
-        $data = $model->getPoiskstroekData($json);
-        
-        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+		if($data = $cache->get("poiskstroekData"))
+		{
+			echo json_encode($data, JSON_UNESCAPED_UNICODE);
+		}
     }
     
     public function actionJsonTest()

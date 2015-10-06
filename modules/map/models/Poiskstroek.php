@@ -61,15 +61,52 @@ class Poiskstroek {
         return $this->design_companies;
     }
 	
-	private function getImg($path)
+	private function getImg($path, $kladr_code)
 	{
-		if(file_exists($_SERVER['DOCUMENT_ROOT'] . $path))
+		if(file_exists("web" . $path))
 		{
 			return $path;
 		}
 		else
 		{
-			return "/images/map/100.png";
+			return "/images/map/" . substr($kladr_code, 0, 2) . ".png";
+		}
+	}
+	
+	public function cachePoiskstroekData()
+	{
+		$cache = Yii::$app->cache;
+		
+		$rows = PoiskstroekData::find()->asArray()->all();
+		
+		if(count($rows) > 0)
+		{
+			foreach($rows as $row)
+			{
+				$this->data[$row['kladr_code']]['kladr_code'] = $row['kladr_code'];
+				$this->data[$row['kladr_code']]['name'] = $row['name'];
+				$this->data[$row['kladr_code']]['construct_sum'] = $this->getCompactSum($row['construct_sum']);
+				$this->data[$row['kladr_code']]['design_sum'] = $this->getCompactSum($row['design_sum']);
+				$this->data[$row['kladr_code']]['construct_count'] = $this->getFormatObjects($row['construct_count']);
+				$this->data[$row['kladr_code']]['design_count'] = $this->getFormatObjects($row['design_count']);
+				$this->data[$row['kladr_code']]['construct_companies'] = $this->getFormatCompany($row['construct_companies']);
+				$this->data[$row['kladr_code']]['design_companies'] = $this->getFormatCompany($row['design_companies']);
+				$this->data[$row['kladr_code']]['img'] = $this->getImg($row['img'], $row['kladr_code']);
+				
+				if($row['name'] == 'Сургут')
+					$this->data[$row['kladr_code']]['link'] = "http://surgut2030.usirf.ru";
+				
+				unset($row);
+			}
+			
+			if($cache->set("poiskstroekData", $this->data))
+			{
+				echo "Информация закеширована\n";
+			}
+			else
+			{
+				echo "Ошибка кеширования по: " . $row['name'] . "\n";
+			}
 		}
 	}
 	
@@ -95,7 +132,7 @@ class Poiskstroek {
         }
         unset($this->district_data);
         
-        foreach($this->city_data as $city['properties'])
+        foreach($this->city_data as $city)
         {
             if(isset($city['properties']))
             {
@@ -187,13 +224,38 @@ class Poiskstroek {
         return $this->data;
     }
 	
+	public function getPoiskstroekDataById($id)
+	{
+		$this->data = array();
+		
+		$this->data = $this->getData($id);
+		
+		return $this->data;
+	}
+	
 	private function addRegion($data)
     {
         if(isset($data['id']))
         {
             $this->kladr_code = str_pad($data['id'], 2, "0", STR_PAD_LEFT);
             
-            if(!$model = Locality::find()->where(['kladr_code' => $this->kladr_code])->one())
+            if($model = Locality::find()->where(['kladr_code' => $this->kladr_code])->one())
+			{
+				$model->kld_subjcode = $data['id'];
+                $model->kladr_code = $this->kladr_code;
+                $model->name = $data['name'];
+                $model->status = true;
+				
+				if($model->save())
+                {
+                    echo "Обновлен регион: " . $data['name'] . "\n";
+                }
+                else
+                {
+                    echo "Error! Обновлен регион: " . $data['name'] . "\n";
+                }
+			}
+			else
             {
                 $model = new Locality();
 
@@ -223,8 +285,33 @@ class Poiskstroek {
             
         if(isset($data['kladr_code']))
         {
-            if(!$model = Locality::find()->where(['kladr_code' => $data['kladr_code']])->one())
+            if($model = Locality::find()->where(['kladr_code' => $data['kladr_code']])->one())
             {
+				$this->kld_subjcode = $data['kld_subjcode'];
+                $this->kld_regcode = $data['kld_regcode'];
+                $this->kld_citycode = $data['kld_citycode'];
+				
+				$model->level = 2;
+                $model->kld_subjcode = $this->kld_subjcode;
+                $model->kld_regcode = $this->kld_regcode;
+                $model->kld_citycode = $this->kld_citycode;
+                $model->kladr_code = $data['kladr_code'];
+                $model->name = $data['name'];
+                $model->status = true;
+
+                if($model->save())
+                {
+                    echo "Обновлен район: " . $data['name'] . "\n";
+                }
+                else
+                {
+                    echo "Error! Обновлен район: " . $data['name'] . "\n";
+                }
+				
+				unset($this->kld_subjcode, $this->kld_regcode, $this->kld_citycode, $data, $model);
+			}
+			else
+			{
                 $this->kld_subjcode = $data['kld_subjcode'];
                 $this->kld_regcode = $data['kld_regcode'];
                 $this->kld_citycode = $data['kld_citycode'];
@@ -253,7 +340,25 @@ class Poiskstroek {
         }
         else
         {
-            if(!$model = Locality::find()->where(['name' => $data['name'], 'kld_subjcode' => $data['kld_subjcode']])->one())
+            if($model = Locality::find()->where(['name' => $data['name'], 'kld_subjcode' => $data['kld_subjcode']])->one())
+			{
+				$model->level = 2;
+                $model->kld_subjcode = $data['kld_subjcode'];
+                $model->name = $data['name'];
+                $model->status = false;
+
+                if($model->save())
+                {
+                    echo "Обновлен район: " . $data['name'] . "\n";
+                }
+                else
+                {
+                    echo "Error! Обновлен район: " . $data['name'] . "\n";
+                }
+                
+                unset($data, $model);
+			}
+			else
             {
                 $model = new Locality();
                
@@ -278,30 +383,55 @@ class Poiskstroek {
     
     private function addData()
     {
-        $model = new PoiskstroekData();
+		if($model = PoiskstroekData::find()->where(['kladr_code' => $this->kladr_code])->andWhere('updated < :date', [':date' => date('Y-m-d')])->one())
+		{
+			$model->kladr_code = $this->kladr_code;
+			$model->name = $this->name;
+			$model->construct_sum = $this->construct_sum;
+			$model->design_sum = $this->design_sum;
+			$model->construct_count = $this->construct_count;
+			$model->design_count = $this->design_count;
+			$model->construct_companies = $this->construct_companies;
+			$model->design_companies = $this->design_companies;
+			$model->img = "/images/map/" . $this->kladr_code . ".png";
+			$model->updated = new Expression('NOW()');
+			
+			if($model->save())
+			{
+				echo "Обновлена информация по: " . $this->name . "\n";
+			}
+			else
+			{
+				echo "Error! Обновлена информация по: " . $this->name . "\n";
+			}
+		}
+		elseif(!$model = PoiskstroekData::find()->where(['kladr_code' => $this->kladr_code])->one())
+		{
+			$model = new PoiskstroekData();
 
-        $model->kladr_code = $this->kladr_code;
-        $model->name = $this->name;
-        $model->construct_sum = $this->construct_sum;
-        $model->design_sum = $this->design_sum;
-        $model->construct_count = $this->construct_count;
-        $model->design_count = $this->design_count;
-        $model->construct_companies = $this->construct_companies;
-        $model->design_companies = $this->design_companies;
-        $model->img = "/images/map/" . $this->kladr_code . ".png";
-        $model->created = new Expression('NOW()');
-        $model->updated = new Expression('NOW()');
+			$model->kladr_code = $this->kladr_code;
+			$model->name = $this->name;
+			$model->construct_sum = $this->construct_sum;
+			$model->design_sum = $this->design_sum;
+			$model->construct_count = $this->construct_count;
+			$model->design_count = $this->design_count;
+			$model->construct_companies = $this->construct_companies;
+			$model->design_companies = $this->design_companies;
+			$model->img = "/images/map/" . $this->kladr_code . ".png";
+			$model->created = new Expression('NOW()');
+			$model->updated = new Expression('NOW()');
 
-        if($model->save())
-        {
-            echo "Добавлена информация по: " . $this->name . "\n";
-        }
-        else
-        {
-            echo "Error! Добавлена информация по: " . $this->name . "\n";
-        }
+			if($model->save())
+			{
+				echo "Добавлена информация по: " . $this->name . "\n";
+			}
+			else
+			{
+				echo "Error! Добавлена информация по: " . $this->name . "\n";
+			}
+		}
 		
-		unset($model);
+		unset($this->construct_sum, $this->design_sum, $this->construct_count, $this->design_count, $this->construct_companies, $this->design_companies, $model);
     }
     
     private function addRussiaData()
@@ -312,20 +442,15 @@ class Poiskstroek {
         {
             $this->name = "Российская Федерация";
             $this->kladr_code = "100";
-            
-            if(!$model = PoiskstroekData::find()->where(['kladr_code' => $this->kladr_code])->one())
-            {
-                $this->construct_sum = $this->russia['construct_sum'];
-                $this->design_sum = $this->russia['design_sum'];
-                $this->construct_count = $this->russia['construct_count'];
-                $this->design_count = $this->russia['design_count'];
-                $this->construct_companies = $this->russia['construct_companies'];
-                $this->design_companies = $this->russia['design_companies'];
-                
-                $this->addData();
-                
-                unset($this->construct_sum, $this->design_sum, $this->construct_count, $this->design_count, $this->construct_companies, $this->design_companies);
-            }
+			
+			$this->construct_sum = $this->russia['construct_sum'];
+            $this->design_sum = $this->russia['design_sum'];
+            $this->construct_count = $this->russia['construct_count'];
+            $this->design_count = $this->russia['design_count'];
+            $this->construct_companies = $this->russia['construct_companies'];
+            $this->design_companies = $this->russia['design_companies'];
+			
+			$this->addData();
         }
         
         unset($this->russia, $this->name, $this->kladr_code);
@@ -335,22 +460,15 @@ class Poiskstroek {
     {
         $this->kladr_code = $value['kladr_code'];
         $this->name = $value['name'];
-                
-        if(!$model = PoiskstroekData::find()->where(['kladr_code' => $this->kladr_code])->one())
-        {
-            $this->construct_sum = $this->getConstructSum();
-            $this->design_sum = $this->getDesignSum();
-            $this->construct_count = $this->getConstructCount();
-            $this->design_count = $this->getDesignCount();
-            $this->construct_companies = $this->getConstructCompanies();
-            $this->design_companies = $this->getDesignCompanies();
-                    
-            $this->addData();
-
-            unset($this->construct_sum, $this->design_sum, $this->construct_count, $this->design_count, $this->construct_companies, $this->design_companies);
-        }
-
-        unset($this->kladr_code, $this->model, $value);
+		
+		$this->construct_sum = $this->getConstructSum();
+		$this->design_sum = $this->getDesignSum();
+		$this->construct_count = $this->getConstructCount();
+		$this->design_count = $this->getDesignCount();
+		$this->construct_companies = $this->getConstructCompanies();
+		$this->design_companies = $this->getDesignCompanies();
+		
+        $this->addData();
     }
 
     public function getCompactSum($value)
