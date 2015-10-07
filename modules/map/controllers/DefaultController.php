@@ -24,14 +24,22 @@ class DefaultController extends Controller
     public function actionData($id = null)
     {
 		$cache = Yii::$app->cache;
+			
+		$model = new Poiskstroek();
 		
-		$json = json_decode(file_get_contents($_SERVER['DOCUMENT_ROOT'] . "/json/map/russia_final.json"), true);
-        
-        $model = new Poiskstroek();
-        
-		if($data = $cache->get("poiskstroekData"))
+		if($id > 0)
 		{
-			echo json_encode($data, JSON_UNESCAPED_UNICODE);
+			if($data = $cache->get("poiskstroekData:" . $id))
+			{
+				echo json_encode($data, JSON_UNESCAPED_UNICODE);
+			}
+		}
+		else
+		{
+			if($data = $cache->get("poiskstroekData"))
+			{
+				echo json_encode($data, JSON_UNESCAPED_UNICODE);
+			}
 		}
     }
     

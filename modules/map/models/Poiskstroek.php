@@ -97,6 +97,15 @@ class Poiskstroek {
 					$this->data[$row['kladr_code']]['link'] = "http://surgut2030.usirf.ru";
 				
 				unset($row);
+				
+				if($cache->set("poiskstroekData:" . $row['kladr_code'], $this->data))
+				{
+					echo "Информация закеширована по: " . $row['name'] . "\n";
+				}
+				else
+				{
+					echo "Ошибка кеширования по: " . $row['name'] . "\n";
+				}
 			}
 			
 			if($cache->set("poiskstroekData", $this->data))

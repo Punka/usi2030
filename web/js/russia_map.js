@@ -37,9 +37,12 @@ var map  = {
 		d3.select(".map-default-index").append("div").attr("id", "label");
 	},
 	
-	renderInformation: function(data, level) {
-		map.renderHeader(data, level);
-		map.renderFooter(data);
+	renderInformation: function(kladr_code, level) {
+		d3.json("/map/default/data/" . kladr_code, function(error, data){
+			map.renderHeader(data, level);
+			map.renderFooter(data);
+			map.datas = data;
+		});
 	},
 	
 	label: function(name, d3) {
@@ -157,7 +160,7 @@ var map  = {
 				{
 					d3.selectAll(".adm").style("display","none");
 					d3.select(".adm.region_" + d.properties.kld_subjcode).style("display","block");
-					map.renderInformation(map.datas[kladr_code], 1);
+					map.renderInformation(d.properties.kladr_code, 1);
 				}
 					
 			})
@@ -166,17 +169,16 @@ var map  = {
 				if(!d3.select(".regions").classed("fixed"))
 				{
 					//if(d3.select(".regions").style("display") != 'none') d3.select(".adm.region_" + d.properties.kld_subjcode).style("display","none");
-					map.renderInformation(map.datas[100], 1);
+					map.renderInformation(100, 1);
 				}
 			})
 			.on("dblclick", this.zooming)
 			.on("click", function(d) {
 				if(d3.select(this).classed("active")){
 					d3.selectAll("path,circle").classed("active", false);
-					//d3.select(".adm").style("display","none");
 					d3.select(this).classed("active", false);
 					d3.select(".regions").classed("fixed", false);
-					map.renderInformation(map.datas[100], 1);
+					map.renderInformation(100, 1);
 				}
 				else
 				{
@@ -186,7 +188,7 @@ var map  = {
 					d3.select(this).classed("active", true);
 					d3.select(".regions").classed("fixed", true);
 					var kladr_code = d.properties.kladr_code;
-					map.renderInformation(map.datas[kladr_code], 1);
+					map.renderInformation(d.properties.kladr_code, 1);
 				}
 			});
 	},
@@ -205,26 +207,26 @@ var map  = {
 				var kladr_code = d.properties.kladr_code;
 				map.label(d.properties.name, d3);
 				if(!d3.select(".districts").classed("fixed")) {
-					map.renderInformation(map.datas[kladr_code], 2);
+					map.renderInformation(d.properties.kladr_code, 2);
 				}
 			})
 			.on("mouseout", function(d){
 				map.label(0, d3);
 				if(!d3.select(".districts").classed("fixed")) {
-					map.renderInformation(map.tmp_data, 2);
+					map.renderInformation(map.tmp_data.kladr_code, 2);
 				}
 			})
 			.on("click", function(d){
 				if(d3.select(this).classed("active")) {
 					d3.selectAll("path,circle").classed("active", false);
 					d3.select(".districts").classed("fixed", false);
-					map.renderInformation(map.tmp_data, 2);
+					map.renderInformation(map.tmp_data.kladr_code, 2);
 				} else {
 					d3.selectAll("path,circle").classed("active", false);
 					d3.select(this).classed("active", true);
 					d3.select(".districts").classed("fixed", true);
 					var kladr_code = d.properties.kladr_code;
-					map.renderInformation(map.datas[kladr_code], 2);
+					map.renderInformation(d.properties.kladr_code, 2);
 				}
 			});
 	},
@@ -249,11 +251,11 @@ var map  = {
 				map.label(d.properties.name, d3);
 				if(d3.select(".regions").style("display") != 'none'){
 					if(!d3.select(".regions").classed("fixed")) {
-						map.renderInformation(map.datas[kladr_code], 1);
+						map.renderInformation(d.properties.kladr_code, 1);
 					}
 				} else {
 					if(!d3.select(".districts").classed("fixed")) {
-						map.renderInformation(map.datas[kladr_code], 2);
+						map.renderInformation(d.properties.kladr_code, 2);
 					}
 				}
 			})
@@ -263,11 +265,11 @@ var map  = {
 				map.label(0, d3);
 				if(d3.select(".regions").style("display") != 'none'){
 					if(!d3.select(".regions").classed("fixed")) {
-						map.renderInformation(map.tmp_data, 1);
+						map.renderInformation(map.tmp_data.kladr_code, 1);
 					}
 				} else {
 					if(!d3.select(".districts").classed("fixed")) {
-						map.renderInformation(map.tmp_data, 2);
+						map.renderInformation(map.tmp_data.kladr_code, 2);
 					}
 				}
 			})
@@ -283,7 +285,7 @@ var map  = {
 					d3.select(selector).classed("fixed", true);
 					d3.selectAll("path,circle").classed("active", false);
 					d3.select(this).classed("active", true);
-					map.renderInformation(map.datas[kladr_code], level);
+					map.renderInformation(d.properties.kladr_code, level);
 				}
 			})
 			.on("dblclick", function(d){
@@ -313,13 +315,12 @@ var map  = {
 			map.renderCity(data_c);
 			map.renderBoundary(boundary);
 			
-			d3.json("/map/default/data", function(error, data){
+			d3.json("/map/default/data/100", function(error, data){
 				if (error) return console.error(error);
 				
-				map.tmp_data = data[100];
-				map.datas = data;
+				map.tmp_data = data;
 				
-				map.renderInformation(map.datas[100], 1);
+				map.renderInformation(100, 1);
 			});
 		});
 	},
@@ -328,10 +329,10 @@ var map  = {
 	cancel: function() {
 		if(d3.select(".regions").style("display") != 'none'){
 			d3.select(".regions").classed("fixed", false);
-			map.renderInformation(map.tmp_data, 1);
+			map.renderInformation(map.tmp_data.kladr_code, 1);
 		}else{
 			d3.select(".districts").classed("fixed", false);
-			map.renderInformation(map.tmp_data, 2);
+			map.renderInformation(map.tmp_data.kladr_code, 2);
 		}
 
 		d3.selectAll("path,circle").classed("active", false);
@@ -342,8 +343,8 @@ var map  = {
 		map.active.classed("active", false);
 		map.active = d3.select(this).classed("active", true);
 		
-		var kladr_code = d.properties.kladr_code;
-		map.tmp_data = map.datas[kladr_code];
+		//var kladr_code = d.properties.kladr_code;
+		map.tmp_data = map.datas;
 
 		var bounds = map.path.bounds(d),
 			dx = bounds[1][0] - bounds[0][0],
@@ -361,15 +362,13 @@ var map  = {
 
 		d3.selectAll("circle").style("r", function(d){ return (6/scale); }).style("stroke-width", function(d) {return (7/scale)/3;});
 
-		map.renderInformation(map.tmp_data, 2);
+		map.renderInformation(map.tmp_data.kladr_code, 2);
 	},
 
 	// Reset zooming region
 	reset: function() {
 		map.active.classed("active", false);
 		map.active = d3.select(null);
-
-		map.tmp_data = map.datas[100];
 
 		map.g_russia.transition().duration(750).call(map.zoom.translate([0, 0]).scale(1).event);
 
@@ -381,7 +380,9 @@ var map  = {
 
 		d3.selectAll("circle").style("r", 5).style("stroke-width", function(d) {return 7/3;});
 
-		map.renderInformation(map.datas[100], 1);
+		map.renderInformation(100, 1);
+		
+		map.tmp_data = map.datas;
 	}
 };
 
