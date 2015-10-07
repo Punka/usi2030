@@ -96,7 +96,6 @@ class Poiskstroek {
 				if($row['name'] == 'Сургут')
 					$this->data[$row['kladr_code']]['link'] = "http://surgut2030.usirf.ru";
 				
-				unset($row);
 				
 				if($cache->set("poiskstroekData:" . $row['kladr_code'], $this->data))
 				{
@@ -106,6 +105,8 @@ class Poiskstroek {
 				{
 					echo "Ошибка кеширования по: " . $row['name'] . "\n";
 				}
+				
+				unset($row);
 			}
 			
 			if($cache->set("poiskstroekData", $this->data))
