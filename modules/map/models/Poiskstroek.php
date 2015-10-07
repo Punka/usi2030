@@ -83,21 +83,33 @@ class Poiskstroek {
 		{
 			foreach($rows as $row)
 			{
-				$this->data[$row['kladr_code']]['kladr_code'] = $row['kladr_code'];
-				$this->data[$row['kladr_code']]['name'] = $row['name'];
-				$this->data[$row['kladr_code']]['construct_sum'] = $this->getCompactSum($row['construct_sum']);
-				$this->data[$row['kladr_code']]['design_sum'] = $this->getCompactSum($row['design_sum']);
-				$this->data[$row['kladr_code']]['construct_count'] = $this->getFormatObjects($row['construct_count']);
-				$this->data[$row['kladr_code']]['design_count'] = $this->getFormatObjects($row['design_count']);
-				$this->data[$row['kladr_code']]['construct_companies'] = $this->getFormatCompany($row['construct_companies']);
-				$this->data[$row['kladr_code']]['design_companies'] = $this->getFormatCompany($row['design_companies']);
-				$this->data[$row['kladr_code']]['img'] = $this->getImg($row['img'], $row['kladr_code']);
+				$arr = array();
+				$arr['kladr_code'] = $row['kladr_code'];
+				$arr['name'] = $row['name'];
+				$arr['construct_sum'] = $this->getCompactSum($row['construct_sum']);
+				$arr['design_sum'] = $this->getCompactSum($row['design_sum']);
+				$arr['construct_count'] = $this->getFormatObjects($row['construct_count']);
+				$arr['design_count'] = $this->getFormatObjects($row['design_count']);
+				$arr['construct_companies'] = $this->getFormatCompany($row['construct_companies']);
+				$arr['design_companies'] = $this->getFormatCompany($row['design_companies']);
+				$arr['img'] = $this->getImg($row['img'], $row['kladr_code']);
+				if($row['name'] == 'Сургут') $arr['link'] = "http://surgut2030.usirf.ru";
+				
+				$this->data[$row['kladr_code']]['kladr_code'] = $arr['kladr_code'];
+				$this->data[$row['kladr_code']]['name'] = $arr['name'];
+				$this->data[$row['kladr_code']]['construct_sum'] = $arr['construct_sum'];
+				$this->data[$row['kladr_code']]['design_sum'] = $arr['design_sum'];
+				$this->data[$row['kladr_code']]['construct_count'] = $arr['construct_count'];
+				$this->data[$row['kladr_code']]['design_count'] = $arr['design_count'];
+				$this->data[$row['kladr_code']]['construct_companies'] = $arr['construct_companies'];
+				$this->data[$row['kladr_code']]['design_companies'] = $arr['design_companies'];
+				$this->data[$row['kladr_code']]['img'] = $arr['img'];
 				
 				if($row['name'] == 'Сургут')
-					$this->data[$row['kladr_code']]['link'] = "http://surgut2030.usirf.ru";
+					$this->data[$row['kladr_code']]['link'] = $arr['link'];
 				
 				
-				if($cache->set("poiskstroekData:" . $row['kladr_code'], $this->data))
+				if($cache->set("poiskstroekData:" . $row['kladr_code'], $arr))
 				{
 					echo "Информация закеширована по: " . $row['name'] . "\n";
 				}
@@ -106,7 +118,7 @@ class Poiskstroek {
 					echo "Ошибка кеширования по: " . $row['name'] . "\n";
 				}
 				
-				unset($row);
+				unset($row, $arr);
 			}
 			
 			if($cache->set("poiskstroekData", $this->data))
