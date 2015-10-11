@@ -24,21 +24,7 @@ $(function(){
         .attr("width", width)
         .attr("height", height)
 		.call(zoom).on("dblclick.zoom", null);
-		
-	d3.selection.prototype.dblTap = function(callback) {
-		var last = 0;
-		return this.each(function() {
-			d3.select(this).on("touchstart", function(e) {
-				if ((d3.event.timeStamp - last) < 500) {
-					//Touched element
-					console.log(this);
-					return callback(e);
-				}
-				last = d3.event.timeStamp;
-			});
-		});
-	}
-		
+	
 	/* задний фон карты */
 	svg.append('rect').attr('class', 'background').style("width", width).style("height", height).on("click", cancel);
 	
@@ -86,8 +72,7 @@ $(function(){
 			.on("mousemove", showTooltip)
 			.on("mouseout", hideTooltip)
 			.on("click", select)
-			.on("dblclick", ZoomIn)
-			.on("dblTap", ZoomIn);
+			.on("dblclick", ZoomIn);
 			
 		/* рисуем границы округов */
 		group_boundary.selectAll(".boundary").data(boundary).enter()
@@ -120,9 +105,6 @@ $(function(){
 			.on("mouseout", hideTooltip)
 			.on("click", select)
 			.on("dblclick", function(d){
-				if(d.properties.name == 'Сургут') window.open('http://surgut2030.usirf.ru', '_blank');
-			})
-			.on("dblTap", function(d){
 				if(d.properties.name == 'Сургут') window.open('http://surgut2030.usirf.ru', '_blank');
 			});
 			
@@ -403,4 +385,41 @@ $(function(){
 			.attr("y", function(d, i){ return height - (i*ls_h) - ls_h - 4;})
 			.text(function(d, i){ return legend_labels[i]; });
 	}
+	
+	d3.selection.prototype.dblTapOnRegion = function(callback) {
+		var last = 0;
+		return this.each(function() {
+			d3.select(this).on("touchstart", function(e) {
+				if ((d3.event.timeStamp - last) < 500) {
+					//Touched element
+					return callback(e);
+				}
+				last = d3.event.timeStamp;
+			});
+		});
+	}
+	
+	d3.selection.prototype.dblTapOnLink = function(callback) {
+		var last = 0;
+		return this.each(function() {
+			d3.select(this).on("touchstart", function(e) {
+				if ((d3.event.timeStamp - last) < 500) {
+					//Touched element
+					
+					
+					return callback(e);
+				}
+				last = d3.event.timeStamp;
+			});
+		});
+	}
+	
+	d3.select(".region").dblTapOnRegion(function(d) {
+		ZoomIn(d);
+    });
+	
+	d3.select(".city path").dblTapOnLink(function(d) {
+		if(d.properties.name == 'Сургут')
+			window.open('http://surgut2030.usirf.ru', '_blank');
+    });
 });
