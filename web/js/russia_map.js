@@ -88,6 +88,8 @@ $(function(){
 			.on("touchstart", function(d){
 				//var last = 0;
 				//if ((d3.event.timeStamp - last) < 500) {
+					alert(1);
+					alert(console.log(d));
 					alert(d3.event.timeStamp);
 				//}
 				//last = d3.event.timeStamp;
