@@ -386,7 +386,7 @@ $(function(){
 			.text(function(d, i){ return legend_labels[i]; });
 	}
 	
-	d3.selection.prototype.dblTapOnRegion = function(callback) {
+	d3.selection.prototype.dblTap = function(callback) {
 		var last = 0;
 		return this.each(function() {
 			d3.select(this).on("touchstart", function(e) {
@@ -399,28 +399,8 @@ $(function(){
 		});
 	}
 	
-	d3.selection.prototype.dblTapOnLink = function(callback) {
-		var last = 0;
-		return this.each(function() {
-			d3.select(this).on("touchstart", function(e) {
-				if ((d3.event.timeStamp - last) < 500) {
-					//Touched element
-					
-					
-					return callback(e);
-				}
-				last = d3.event.timeStamp;
-			});
-		});
-	}
-	
-	d3.select(".region").dblTapOnRegion(function() {
+	d3.selectAll(".region").dblTap(function() {
 		alert(1);
 		//ZoomIn(d);
-    });
-	
-	d3.select(".city path").dblTapOnLink(function(d) {
-		if(d.properties.name == 'Сургут')
-			window.open('http://surgut2030.usirf.ru', '_blank');
     });
 });
