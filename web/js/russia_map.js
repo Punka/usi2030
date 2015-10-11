@@ -87,18 +87,6 @@ $(function(){
 			.on("dblclick", ZoomIn)
 			.on("touchstart", function(d){
 				alert(1);
-			})
-			.on("touchenter", function(d){
-				alert(1);
-			})
-			.on("touchmove", function(d){
-				alert(1);
-			})
-			.on("touchend", function(d){
-				alert(1);
-			})
-			.on("touchcancel", function(d) {
-				alert(1);
 			});
 		
 		//d3.select(".region").dblTap(function() {
