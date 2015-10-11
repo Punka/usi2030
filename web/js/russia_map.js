@@ -48,7 +48,7 @@ $(function(){
 		.attr("class", "tooltip")
 		.style("display", "none");
 		
-	/*d3.selection.prototype.dblTap = function(callback) {
+	d3.selection.prototype.dblTap = function(callback) {
       var last = 0;
       return this.each(function() {
         d3.select(this).on("touchstart", function(e) {
@@ -58,7 +58,7 @@ $(function(){
             last = d3.event.timeStamp;
         });
       });
-    }*/
+    }
 		
 	/* получаем json данные от сервера */
 	d3.json("/json/map/russia_final.json", function (error, russia) {
@@ -84,19 +84,19 @@ $(function(){
 			.on("mousemove", showTooltip)
 			.on("mouseout", hideTooltip)
 			.on("click", select)
-			.on("dblclick", ZoomIn)
-			.on("touchstart", function(d){
+			.on("dblclick", ZoomIn);
+			//.on("touchstart", function(d){
 				//var last = 0;
 				//if ((d3.event.timeStamp - last) < 500) {
-					alert(this);
-					alert(d3.event.timeStamp);
+					//alert(this);
+					//alert(d3.event.timeStamp);
 				//}
 				//last = d3.event.timeStamp;
-			});
+			//});
 		
-		//d3.select(".region").dblTap(function() {
-		//  alert("Double tap!");
-		//});
+		d3.selectAll(".region").dblTap(function() {
+			alert("Double tap!!!");
+		});
 			
 		/* рисуем границы округов */
 		group_boundary.selectAll(".boundary").data(boundary).enter()
