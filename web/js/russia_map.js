@@ -48,7 +48,7 @@ $(function(){
 		.attr("class", "tooltip")
 		.style("display", "none");
 		
-	d3.selection.prototype.dblTap = function(callback) {
+	/*d3.selection.prototype.dblTap = function(callback) {
       var last = 0;
       return this.each(function() {
         d3.select(this).on("touchstart", function(e) {
@@ -58,7 +58,8 @@ $(function(){
             last = d3.event.timeStamp;
         });
       });
-    }
+    }*/
+	var last = 0;
 		
 	/* получаем json данные от сервера */
 	d3.json("/json/map/russia_final.json", function (error, russia) {
@@ -84,19 +85,19 @@ $(function(){
 			.on("mousemove", showTooltip)
 			.on("mouseout", hideTooltip)
 			.on("click", select)
-			.on("dblclick", ZoomIn);
-			//.on("touchstart", function(d){
-				//var last = 0;
-				//if ((d3.event.timeStamp - last) < 500) {
-					//alert(this);
-					//alert(d3.event.timeStamp);
-				//}
-				//last = d3.event.timeStamp;
-			//});
+			.on("dblclick", ZoomIn)
+			/*.on("touchstart", function(d){
+				if ((d3.event.timeStamp - last) < 500) {
+					ZoomIn(d);
+				}
+				last = d3.event.timeStamp;
+			})*/
+			.on("touchstart", select_touch);
 		
-		d3.selectAll(".region").dblTap(function() {
-			alert("Double tap!!!");
-		});
+		//d3.selectAll(".region").dblTap(function(e) {
+		//	alert(console.log(e));
+		//	alert("Double tap!!!");
+		//});
 			
 		/* рисуем границы округов */
 		group_boundary.selectAll(".boundary").data(boundary).enter()
@@ -273,6 +274,38 @@ $(function(){
 			/* обновляем информацию */
 			update(data.kladr_code, "click");
 		}
+	}
+	
+	function select_touch(d) {
+		var event = null
+		if ((d3.event.timeStamp - last) < 400) {
+			event = 2;
+		}
+		
+		if(event > 1) {
+			ZoomIn(d);
+		} else {
+			if(d3.select(this).classed("active")) {
+				d3.selectAll("path").classed("active", false);
+				
+				group_russia.classed("fix", false);
+			} else {
+				d3.selectAll("path").classed("active", false);
+				d3.select(this).classed("active", true);
+				
+				if(d.properties.cid) {
+					d3.selectAll(".adm").style("display", "none");
+					d3.select(".adm.reg_id_" + d.properties.kld_subjcode).style("display", "block");
+				}
+				
+				group_russia.classed("fix", true);
+				
+				/* обновляем информацию */
+				update(data.kladr_code, "click");
+			}
+		}
+		
+		last = d3.event.timeStamp;
 	}
 	
 	/* отмена селекта */
