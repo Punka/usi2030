@@ -86,11 +86,11 @@ $(function(){
 			.on("click", select)
 			.on("dblclick", ZoomIn)
 			.on("touchstart", function(d){
-				var last = 0;
-				if ((d3.event.timeStamp - last) < 500) {
-					alert("dblclick!");
-				}
-				last = d3.event.timeStamp;
+				//var last = 0;
+				//if ((d3.event.timeStamp - last) < 500) {
+					alert(d3.event.timeStamp);
+				//}
+				//last = d3.event.timeStamp;
 			});
 		
 		//d3.select(".region").dblTap(function() {
