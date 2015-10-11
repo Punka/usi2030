@@ -414,8 +414,9 @@ $(function(){
 		});
 	}
 	
-	d3.select(".region").dblTapOnRegion(function(d) {
-		ZoomIn(d);
+	d3.select(".region").dblTapOnRegion(function() {
+		alert(1);
+		//ZoomIn(d);
     });
 	
 	d3.select(".city path").dblTapOnLink(function(d) {
