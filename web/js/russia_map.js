@@ -387,20 +387,18 @@ $(function(){
 	}
 	
 	d3.selection.prototype.dblTap = function(callback) {
-		var last = 0;
-		return this.each(function() {
-			d3.select(this).on("touchstart", function(e) {
-				if ((d3.event.timeStamp - last) < 500) {
-					//Touched element
-					return callback(e);
-				}
-				last = d3.event.timeStamp;
-			});
-		});
-	}
-	
-	d3.selectAll(".region").dblTap(function() {
-		alert(1);
-		//ZoomIn(d);
+      var last = 0;
+      return this.each(function() {
+        d3.select(this).on("touchstart", function(e) {
+            if ((d3.event.timeStamp - last) < 500) {
+              return callback(e);
+            }
+            last = d3.event.timeStamp;
+        });
+      });
+    }
+
+    d3.select("div").dblTap(function() {
+      alert("Double tap!");
     });
 });
