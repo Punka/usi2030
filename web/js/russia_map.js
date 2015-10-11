@@ -48,7 +48,7 @@ $(function(){
 		.attr("class", "tooltip")
 		.style("display", "none");
 		
-	d3.selection.prototype.dblTap = function(callback) {
+	/*d3.selection.prototype.dblTap = function(callback) {
       var last = 0;
       return this.each(function() {
         d3.select(this).on("touchstart", function(e) {
@@ -58,7 +58,7 @@ $(function(){
             last = d3.event.timeStamp;
         });
       });
-    }
+    }*/
 		
 	/* получаем json данные от сервера */
 	d3.json("/json/map/russia_final.json", function (error, russia) {
@@ -85,7 +85,21 @@ $(function(){
 			.on("mouseout", hideTooltip)
 			.on("click", select)
 			.on("dblclick", ZoomIn)
-			.on("touchstart", dblTap);
+			.on("touchstart", function(d){
+				alert(1);
+			})
+			.on("touchenter", function(d){
+				alert(1);
+			})
+			.on("touchmove", function(d){
+				alert(1);
+			})
+			.on("touchend", function(d){
+				alert(1);
+			})
+			.on("touchcancel", function(d) {
+				alert(1);
+			});
 		
 		//d3.select(".region").dblTap(function() {
 		//  alert("Double tap!");
