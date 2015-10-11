@@ -398,7 +398,7 @@ $(function(){
       });
     }
 
-    d3.select("div").dblTap(function() {
+    d3.select("path").dblTap(function() {
       alert("Double tap!");
     });
 });
