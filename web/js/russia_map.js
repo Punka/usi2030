@@ -389,7 +389,7 @@ $(function(){
 	d3.selection.prototype.dblTap = function(callback) {
       var last = 0;
       return this.each(function() {
-        d3.select(this).on("touchstart", function(e) {
+        d3.selectAll(this).on("touchstart", function(e) {
             if ((d3.event.timeStamp - last) < 500) {
               return callback(e);
             }
@@ -398,7 +398,7 @@ $(function(){
       });
     }
 
-    d3.select("path").dblTap(function() {
+    d3.selectAll(".region").dblTap(function() {
       alert("Double tap!");
     });
 });
