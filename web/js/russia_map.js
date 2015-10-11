@@ -48,6 +48,18 @@ $(function(){
 		.attr("class", "tooltip")
 		.style("display", "none");
 		
+	d3.selection.prototype.dblTap = function(callback) {
+      var last = 0;
+      return this.each(function() {
+        d3.select(this).on("touchstart", function(e) {
+            if ((d3.event.timeStamp - last) < 500) {
+              return callback(e);
+            }
+            last = d3.event.timeStamp;
+        });
+      });
+    }
+		
 	/* получаем json данные от сервера */
 	d3.json("/json/map/russia_final.json", function (error, russia) {
 		if (error) {
@@ -72,7 +84,12 @@ $(function(){
 			.on("mousemove", showTooltip)
 			.on("mouseout", hideTooltip)
 			.on("click", select)
-			.on("dblclick", ZoomIn);
+			.on("dblclick", ZoomIn)
+			.on("touchstart", dblTap);
+		
+		//d3.select(".region").dblTap(function() {
+		//  alert("Double tap!");
+		//});
 			
 		/* рисуем границы округов */
 		group_boundary.selectAll(".boundary").data(boundary).enter()
@@ -385,20 +402,4 @@ $(function(){
 			.attr("y", function(d, i){ return height - (i*ls_h) - ls_h - 4;})
 			.text(function(d, i){ return legend_labels[i]; });
 	}
-	
-	d3.selection.prototype.dblTap = function(callback) {
-      var last = 0;
-      return this.each(function() {
-        d3.selectAll(this).on("touchstart", function(e) {
-            if ((d3.event.timeStamp - last) < 500) {
-              return callback(e);
-            }
-            last = d3.event.timeStamp;
-        });
-      });
-    }
-
-    d3.selectAll(".region").dblTap(function() {
-      alert("Double tap!");
-    });
 });
