@@ -6,6 +6,8 @@ $(function(){
 	window.data = null;
 	window.parent = null;
 	
+	var myArr = new Object();
+	
 	/* переводим координаты в проекцию albers с уже заданных масштабированием, смещением, и т.д. (наиболее подходящая) */
 	var projection = d3.geo.albers().rotate([-105, 0]).center([-10, 65]).parallels([52, 64]).scale(Math.max(width/1.4, height/1.4)).translate([width / 2, height / 2]);
 	
@@ -394,20 +396,32 @@ $(function(){
 	
 	/* обновление информации  */
 	function update(kladr_code, event) {
-		d3.json("/map/default/data/" + kladr_code, function(error, data) {
-			if (error) {
-				console.log(error);
-				return;
-			}
-			
-			if(kladr_code == 100) window.parent = data;
-			window.data = data;
-			
+		if(kladr_code in myArr) {
+			if(kladr_code == 100) window.parent = myArr[kladr_code];
+			window.data = myArr[kladr_code];
+				
 			if(group_russia.classed("fix") == false || event == "click") {
-				renderHeader(data);
-				renderFooter(data);
+				renderHeader(myArr[kladr_code]);
+				renderFooter(myArr[kladr_code]);
 			}
-		});
+		} else {
+			d3.json("/map/default/data/" + kladr_code, function(error, data) {
+				if (error) {
+					console.log(error);
+					return;
+				}
+				
+				myArr[kladr_code] = data;
+				
+				if(kladr_code == 100) window.parent = data;
+				window.data = data;
+				
+				if(group_russia.classed("fix") == false || event == "click") {
+					renderHeader(data);
+					renderFooter(data);
+				}
+			});
+		}
 	}
 	
 	/* отрисовка (рендеринг) легенды */
