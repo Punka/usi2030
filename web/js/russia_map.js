@@ -194,6 +194,9 @@ $(function(){
 		
 		/* применяем полученный масштаб и смещение с продолжительностью 750 мс */
 		group_russia.transition().duration(750).call(zoom.translate(translate).scale(scale).event);
+		
+		/* запомнить начальное состояние масштаба субъекта */
+		zoom.scaleExtent([scale, 60]);
 	}
 	
 	/* сброс приближения (zoom out) */
