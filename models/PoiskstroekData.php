@@ -27,7 +27,7 @@ class PoiskstroekData extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return '{{%poiskstroek_data}}';
+        return '{{%map.poiskstroek_data}}';
     }
 
     /**

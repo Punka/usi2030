@@ -8,54 +8,61 @@ use yii\i18n\Formatter;
 
 use app\models\Locality;
 use app\models\PoiskstroekData;
+use app\models\Attribute;
 
 class Poiskstroek {
 
 	protected $russia, $data, $json_data, $name, $kladr_code, $construct_sum, $design_sum, $construct_count, $design_count, $construct_companies, $design_companies, $format, $value, $pattern;
 	
-    private function getConstructSum()
+	public function getDateUpdated()
+	{
+		$sql = Yii::$app->poiskstroek->createCommand("SELECT updated FROM object WHERE actual = TRUE AND checked = TRUE AND type = '1' AND contract_stage = '3' AND contract_id IS NOT NULL ORDER BY updated DESC LIMIT 1")->queryOne();
+		return $sql['updated'];
+	}
+	
+    private function getConstructSum($kladr_code)
     {
-        $this->construct_sum = Yii::$app->poiskstroek->createCommand("SELECT COALESCE(SUM(contract_price), 0.00) as sum FROM object WHERE actual = TRUE AND checked = TRUE AND type = '1' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$this->kladr_code}%'")->queryOne();
+        $this->construct_sum = Yii::$app->poiskstroek->createCommand("SELECT COALESCE(SUM(contract_price), 0.00) as sum FROM object WHERE actual = TRUE AND checked = TRUE AND type = '1' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
         $this->construct_sum = Yii::$app->formatter->asDecimal($this->construct_sum['sum'], 2);
         
         return $this->construct_sum;
     }
     
-    private function getDesignSum()
+    private function getDesignSum($kladr_code)
     {
-        $this->design_sum = Yii::$app->poiskstroek->createCommand("SELECT COALESCE(SUM(contract_price), 0.00) as sum FROM object WHERE actual = TRUE AND checked = TRUE AND type = '2' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$this->kladr_code}%'")->queryOne();
+        $this->design_sum = Yii::$app->poiskstroek->createCommand("SELECT COALESCE(SUM(contract_price), 0.00) as sum FROM object WHERE actual = TRUE AND checked = TRUE AND type = '2' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
         $this->design_sum = Yii::$app->formatter->asDecimal($this->design_sum['sum'], 2);
         
         return $this->design_sum;
     }
     
-    private function getConstructCount()
+    private function getConstructCount($kladr_code)
     {
-        $this->construct_count = Yii::$app->poiskstroek->createCommand("SELECT COUNT(id) FROM object WHERE actual = TRUE AND checked = TRUE AND type = '1' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$this->kladr_code}%'")->queryOne();
+        $this->construct_count = Yii::$app->poiskstroek->createCommand("SELECT COUNT(id) FROM object WHERE actual = TRUE AND checked = TRUE AND type = '1' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
         $this->construct_count = $this->construct_count['count'];
         
         return $this->construct_count;
     }
     
-    private function getDesignCount()
+    private function getDesignCount($kladr_code)
     {
-        $this->design_count = Yii::$app->poiskstroek->createCommand("SELECT COUNT(id) FROM object WHERE actual = TRUE AND checked = TRUE AND type = '2' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$this->kladr_code}%'")->queryOne();
+        $this->design_count = Yii::$app->poiskstroek->createCommand("SELECT COUNT(id) FROM object WHERE actual = TRUE AND checked = TRUE AND type = '2' AND contract_stage = '3' AND contract_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
         $this->design_count = $this->design_count['count'];
         
         return $this->design_count;
     }
     
-    private function getConstructCompanies()
+    private function getConstructCompanies($kladr_code)
     {
-        $this->construct_companies = Yii::$app->poiskstroek->createCommand("SELECT COUNT(DISTINCT(contract_supplier_id)) FROM object WHERE actual = '1' AND checked = '1' AND contract_stage = '3' AND contract_supplier_id IS NOT NULL AND kladr_code LIKE '{$this->kladr_code}%'")->queryOne();
+        $this->construct_companies = Yii::$app->poiskstroek->createCommand("SELECT COUNT(DISTINCT(contract_supplier_id)) FROM object WHERE actual = '1' AND checked = '1' AND contract_stage = '3' AND contract_supplier_id IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
         $this->construct_companies = $this->construct_companies['count'];
         
         return $this->construct_companies;
     }
     
-    private function getDesignCompanies()
+    private function getDesignCompanies($kladr_code)
     {
-        $this->design_companies = Yii::$app->poiskstroek->createCommand("SELECT COUNT(DISTINCT(contract_designer_id )) FROM object WHERE actual = '1' AND checked = '1' AND contract_stage = '3' AND contract_designer_id  IS NOT NULL AND kladr_code LIKE '{$this->kladr_code}%'")->queryOne();
+        $this->design_companies = Yii::$app->poiskstroek->createCommand("SELECT COUNT(DISTINCT(contract_designer_id )) FROM object WHERE actual = '1' AND checked = '1' AND contract_stage = '3' AND contract_designer_id  IS NOT NULL AND kladr_code LIKE '{$kladr_code}%'")->queryOne();
         $this->design_companies = $this->design_companies['count'];
         
         return $this->design_companies;
@@ -81,6 +88,8 @@ class Poiskstroek {
 		
 		if(count($rows) > 0)
 		{
+			$updated = $this->getDateUpdated();
+			
 			foreach($rows as $row)
 			{
 				$arr = array();
@@ -94,6 +103,7 @@ class Poiskstroek {
 				$arr['design_companies'] = $this->getFormatCompany($row['design_companies']);
 				$arr['img'] = $this->getImg($row['img'], $row['kladr_code']);
 				if($row['name'] == 'Сургут') $arr['link'] = "http://surgut2030.usirf.ru";
+				$arr['updated'] = date("d.m.Y", strtotime($updated));
 				
 				$this->data[$row['kladr_code']]['kladr_code'] = $arr['kladr_code'];
 				$this->data[$row['kladr_code']]['name'] = $arr['name'];
@@ -104,6 +114,19 @@ class Poiskstroek {
 				$this->data[$row['kladr_code']]['construct_companies'] = $arr['construct_companies'];
 				$this->data[$row['kladr_code']]['design_companies'] = $arr['design_companies'];
 				$this->data[$row['kladr_code']]['img'] = $arr['img'];
+				
+				if($attributes = Attribute::find()->where(['kladr_code' => $arr['kladr_code']])->andWhere("date >= '2015-01-01'")->with('attrType','measure')->all())
+				{
+					foreach($attributes as $attr)
+					{
+						$progress = "";
+						if($attr->progress == 'd' or $attr->progress == 'u') $progress = $attr->progress;
+						
+						//$this->data[$row['kladr_code']][$attr->attrType->alias] = $attr->value;
+						$arr['attributes'][] = $attr->attrType->name . ":" . date("d.m.Y", strtotime($attr->date)) . ":" . $attr->value . ":" . $attr->measure->name . ":" . $progress;
+					}
+					
+				}
 				
 				if($row['name'] == 'Сургут')
 					$this->data[$row['kladr_code']]['link'] = $arr['link'];
@@ -127,7 +150,7 @@ class Poiskstroek {
 			}
 			else
 			{
-				echo "Ошибка кеширования по: " . $row['name'] . "\n";
+				echo "Ошибка кеширования\n";
 			}
 		}
 	}
@@ -458,39 +481,119 @@ class Poiskstroek {
     
     private function addRussiaData()
     {
-        $this->russia = Yii::$app->poiskstroek->createCommand("select sum(construction_objects_count) as construct_count, sum(construction_objects_sum) as construct_sum, sum(design_objects_count) as design_count, sum(design_objects_sum) as design_sum, sum(suppliers_count) as construct_companies, sum(designers_count) as design_companies from region limit 1;")->queryOne();
+        if($model = PoiskstroekData::find()->where(['kladr_code' => 100])->andWhere('updated < :date', [':date' => date('Y-m-d')])->one())
+		{
+			$mode = 1;
+		}
+		elseif(!$model = PoiskstroekData::find()->where(['kladr_code' => 100])->one())
+		{
+			$mode = 2;
+			$model = new PoiskstroekData();
+		}
+		else
+		{
+			return false;
+		}
+		
+		$this->russia = Yii::$app->poiskstroek->createCommand("select sum(construction_objects_count) as construct_count, sum(construction_objects_sum) as construct_sum, sum(design_objects_count) as design_count, sum(design_objects_sum) as design_sum, sum(suppliers_count) as construct_companies, sum(designers_count) as design_companies from region limit 1;")->queryOne();
         
-        if($this->russia)
-        {
-            $this->name = "Российская Федерация";
-            $this->kladr_code = "100";
+		
+		$model->name = "Российская Федерация";
+        $model->kladr_code = "100";
+		
+		$model->construct_sum = $this->russia['construct_sum'];
+        $model->design_sum = $this->russia['design_sum'];
+        $model->construct_count = $this->russia['construct_count'];
+        $model->design_count = $this->russia['design_count'];
+        $model->construct_companies = $this->russia['construct_companies'];
+        $model->design_companies = $this->russia['design_companies'];
+		$model->img = "/images/map/100.png";
+		
+		if($mode == 1)
+		{
+			$model->updated = new Expression('NOW()');
 			
-			$this->construct_sum = $this->russia['construct_sum'];
-            $this->design_sum = $this->russia['design_sum'];
-            $this->construct_count = $this->russia['construct_count'];
-            $this->design_count = $this->russia['design_count'];
-            $this->construct_companies = $this->russia['construct_companies'];
-            $this->design_companies = $this->russia['design_companies'];
-			
-			$this->addData();
-        }
+			if($model->save())
+			{
+				echo "Обновлена информация по: " . $model->name . "\n";
+			}
+			else
+			{
+				echo "Error! Обновлена информация по: " . $model->name . "\n";
+			}
+		}
+		elseif($mode == 2)
+		{
+			$model->created = new Expression('NOW()');
+			$model->updated = new Expression('NOW()');
+
+			if($model->save())
+			{
+				echo "Добавлена информация по: " . $model->name . "\n";
+			}
+			else
+			{
+				echo "Error! Добавлена информация по: " . $model->name . "\n";
+			}
+		}
         
         unset($this->russia, $this->name, $this->kladr_code);
     }
     
     private function addLocalityData($value)
     {
-        $this->kladr_code = $value['kladr_code'];
-        $this->name = $value['name'];
+        if($model = PoiskstroekData::find()->where(['kladr_code' => $value['kladr_code']])->andWhere('updated < :date', [':date' => date('Y-m-d')])->one())
+		{
+			$mode = 1;
+		}
+		elseif(!$model = PoiskstroekData::find()->where(['kladr_code' => $value['kladr_code']])->one())
+		{
+			$mode = 2;
+			$model = new PoiskstroekData();
+		}
+		else
+		{
+			return false;
+		}
 		
-		$this->construct_sum = $this->getConstructSum();
-		$this->design_sum = $this->getDesignSum();
-		$this->construct_count = $this->getConstructCount();
-		$this->design_count = $this->getDesignCount();
-		$this->construct_companies = $this->getConstructCompanies();
-		$this->design_companies = $this->getDesignCompanies();
+		$model->kladr_code = $value['kladr_code'];
+        $model->name = $value['name'];
 		
-        $this->addData();
+		$model->construct_sum = $this->getConstructSum($value['kladr_code']);
+		$model->design_sum = $this->getDesignSum($value['kladr_code']);
+		$model->construct_count = $this->getConstructCount($value['kladr_code']);
+		$model->design_count = $this->getDesignCount($value['kladr_code']);
+		$model->construct_companies = $this->getConstructCompanies($value['kladr_code']);
+		$model->design_companies = $this->getDesignCompanies($value['kladr_code']);
+		$model->img = "/images/map/" . $value['kladr_code'] . ".png";
+		
+		if($mode == 1)
+		{
+			$model->updated = new Expression('NOW()');
+			
+			if($model->save())
+			{
+				echo "Обновлена информация по: " . $model->name . "\n";
+			}
+			else
+			{
+				echo "Error! Обновлена информация по: " . $model->name . "\n";
+			}
+		}
+		elseif($mode == 2)
+		{
+			$model->created = new Expression('NOW()');
+			$model->updated = new Expression('NOW()');
+
+			if($model->save())
+			{
+				echo "Добавлена информация по: " . $model->name . "\n";
+			}
+			else
+			{
+				echo "Error! Добавлена информация по: " . $model->name . "\n";
+			}
+		}
     }
 
     public function getCompactSum($value)

@@ -47,11 +47,20 @@ svg {
 #footer .footer-title {
     font-size: 16px;
 	list-style-type: none;
-    padding: 0 30px;
+    padding: 0 15px;
     text-transform: uppercase;
 
     overflow: hidden;
     height: 150px;
+}
+
+#footer .footer-title .left {
+	float: left;
+	text-transform: none;
+}
+
+#footer .footer-title .right {
+	float: right;
 }
 
 #footer .title.full {
@@ -167,4 +176,43 @@ svg {
 
 .city path:hover, .city path.active {
 	fill: #fff;
+}
+
+.attribute div {
+	float: left;
+	line-height: 1.3;
+	padding-top: 11px;
+	text-transform: none;
+}
+
+.attribute .name {
+	color: #303030;
+    font-weight: normal;
+	width: 40%;
+}
+
+.attribute .date {
+    color: darkcyan;
+	font-size: 12px;
+	font-weight: normal;
+	margin-top: 4px;
+	text-align: center;
+	width: 20%;
+}
+
+.attribute .value {
+	color: #287fc3;
+    font-weight: bold;
+    text-align: right;
+	width: 40%;
+}
+
+.glyphicon-arrow-up {
+	color: green;
+	font-size: 12px;
+}
+
+.glyphicon-arrow-down {
+	color: red;
+	font-size: 12px;
 }

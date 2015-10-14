@@ -15,7 +15,7 @@ $(function(){
 	var path = d3.geo.path().projection(projection).pointRadius(5);
 	
 	/* поведения для приближения (zoom)) */
-	var zoom = d3.behavior.zoom().scaleExtent([1, 60]).size([width, height]).on("zoom", scrollZoom);
+	var zoom = d3.behavior.zoom().translate([0, 0]).scaleExtent([1, 60]).size([width, height]).on("zoom", scrollZoom);
 	var zoom_reset = d3.behavior.zoom().translate([0, 0]).scale(1).scaleExtent([1, 8]).on("zoom", function(){
 		group_russia.style("stroke-width", 1 / d3.event.scale + "px");
 		group_russia.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
@@ -50,17 +50,6 @@ $(function(){
 		.attr("class", "tooltip")
 		.style("display", "none");
 		
-	/*d3.selection.prototype.dblTap = function(callback) {
-      var last = 0;
-      return this.each(function() {
-        d3.select(this).on("touchstart", function(e) {
-            if ((d3.event.timeStamp - last) < 500) {
-              return callback(e);
-            }
-            last = d3.event.timeStamp;
-        });
-      });
-    }*/
 	var last = 0;
 		
 	/* получаем json данные от сервера */
@@ -88,18 +77,7 @@ $(function(){
 			.on("mouseout", hideTooltip)
 			.on("click", select)
 			.on("dblclick", ZoomIn)
-			/*.on("touchstart", function(d){
-				if ((d3.event.timeStamp - last) < 500) {
-					ZoomIn(d);
-				}
-				last = d3.event.timeStamp;
-			})*/
 			.on("touchstart", select_touch);
-		
-		//d3.selectAll(".region").dblTap(function(e) {
-		//	alert(console.log(e));
-		//	alert("Double tap!!!");
-		//});
 			
 		/* рисуем границы округов */
 		group_boundary.selectAll(".boundary").data(boundary).enter()
@@ -196,7 +174,7 @@ $(function(){
 		group_russia.transition().duration(750).call(zoom.translate(translate).scale(scale).event);
 		
 		/* запомнить начальное состояние масштаба субъекта */
-		zoom.scaleExtent([scale, 60]);
+		zoom.scaleExtent([scale, 1000]);
 	}
 	
 	/* сброс приближения (zoom out) */
@@ -354,26 +332,79 @@ $(function(){
 		
 		var ul_left = d3.select(".footer-left ul.footer-title");
 		ul_left.selectAll("li").remove();
-		render_li(ul_left, "Строятся:", data.construct_count, "http://poiskstroek.ru/objects?ObjectFilter[type]=1&ObjectFilter[stage]=3" + ((data.kladr_code && data.kladr_code != 100) ? "&ObjectFilter[region]=" + data.kladr_code : ''));
-		render_li(ul_left, "На сумму:", data.construct_sum, "http://poiskstroek.ru/objects?ObjectFilter[type]=1&ObjectFilter[stage]=3" + ((data.kladr_code && data.kladr_code != 100) ? "&ObjectFilter[region]=" + data.kladr_code : ''));
-		render_li(ul_left, "Проектируются:", data.design_count, "http://poiskstroek.ru/objects?ObjectFilter[type]=2&ObjectFilter[stage]=3" + ((data.kladr_code && data.kladr_code != 100) ? "&ObjectFilter[region]=" + data.kladr_code : ''));
-		render_li(ul_left, "На сумму:", data.design_sum, "http://poiskstroek.ru/objects?ObjectFilter[type]=2&ObjectFilter[stage]=3" + ((data.kladr_code && data.kladr_code != 100) ? "&ObjectFilter[region]=" + data.kladr_code : ''));
-		render_li(ul_left, "Строят:", data.construct_companies, "http://poiskstroek.ru/companies?OrganizationFilter[type]=2" + ((data.kladr_code && data.kladr_code != 100) ? "&OrganizationFilter[region]=" + data.kladr_code : ''));
-		render_li(ul_left, "Проектируют:", data.design_companies, "http://poiskstroek.ru/companies?OrganizationFilter[type]=3" + ((data.kladr_code && data.kladr_code != 100) ? "&OrganizationFilter[region]=" + data.kladr_code : ''));
+		var date = (data.updated) ? data.updated : "2015";
+		render_li(ul_left, "Строятся:", data.construct_count, "http://poiskstroek.ru/objects?ObjectFilter[type]=1&ObjectFilter[stage]=3" + ((data.kladr_code && data.kladr_code != 100) ? "&ObjectFilter[region]=" + data.kladr_code : ''), date);
+		render_li(ul_left, "На сумму:", data.construct_sum, "http://poiskstroek.ru/objects?ObjectFilter[type]=1&ObjectFilter[stage]=3" + ((data.kladr_code && data.kladr_code != 100) ? "&ObjectFilter[region]=" + data.kladr_code : ''), date);
+		render_li(ul_left, "Проектируются:", data.design_count, "http://poiskstroek.ru/objects?ObjectFilter[type]=2&ObjectFilter[stage]=3" + ((data.kladr_code && data.kladr_code != 100) ? "&ObjectFilter[region]=" + data.kladr_code : ''), date);
+		render_li(ul_left, "На сумму:", data.design_sum, "http://poiskstroek.ru/objects?ObjectFilter[type]=2&ObjectFilter[stage]=3" + ((data.kladr_code && data.kladr_code != 100) ? "&ObjectFilter[region]=" + data.kladr_code : ''), date);
+		render_li(ul_left, "Строят:", data.construct_companies, "http://poiskstroek.ru/companies?OrganizationFilter[type]=2" + ((data.kladr_code && data.kladr_code != 100) ? "&OrganizationFilter[region]=" + data.kladr_code : ''), date);
+		render_li(ul_left, "Проектируют:", data.design_companies, "http://poiskstroek.ru/companies?OrganizationFilter[type]=3" + ((data.kladr_code && data.kladr_code != 100) ? "&OrganizationFilter[region]=" + data.kladr_code : ''), date);
 		
 		var ul_right = d3.select(".footer-right ul.footer-title");
 		ul_right.selectAll("li").remove();
-		render_li(ul_right, "Показатель:", "");
-		render_li(ul_right, "Показатель:", "");
-		render_li(ul_right, "Показатель:", "");
-		render_li(ul_right, "Показатель:", "");
+		
+		if(data.attributes)
+		{
+			for(var i = 0; i < data.attributes.length; i++)
+			{
+				var arr = data.attributes[i].split(":");
+				render_li(ul_right, arr[0], arr[2], null, arr[1], arr[3], arr[4]);
+			}
+		}
+		else
+		{
+			for(var i = 0; i < 4; i++)
+				render_li(ul_right, "Показатель:", "");
+		}
+	}
+	
+	function isProgress(progress) {
+		if(progress)
+		{
+			
+			if(progress == 'u'){
+				console.log(progress);
+				progress = "up";
+			} 
+			else if(progress == 'd'){
+				console.log(progress);
+				progress = "down";
+			}
+			
+			return progress;
+		}
 	}
 	
 	/* генерация элементов списка атрибутов */
-	function render_li(selector, caption, value, link) {
-		var li_left = selector.append("li");
+	function render_li(selector, caption, value, link, date, measure, progress) {
+		var li_left = selector.append("li").attr("class", "attribute");
+		
+		var progress = isProgress(progress);
+		
+		if(value)
+		{
+			li_left.append("div").attr("class", "name").html(caption);
+			li_left.append("div").attr("class", "date").html(date);
+			
+			if(link)
+			{
+				li_left.append("div").attr("class", "value").html('<a target="_blank" href="' + link + '">' + value + " " + ((measure) ? measure : "") + '</a>');
+			}
+			else
+			{
+				li_left.append("div").attr("class", "value").html('<span class="glyphicon glyphicon-arrow-' + progress + '"></span> ' + value + " " + ((measure) ? measure : ""));
+			}
+			
+		}
+		else
+		{
+			li_left.append("div").attr("class", "name").html(caption);
+			li_left.append("div").attr("class", "date").html(date);
+			li_left.append("div").attr("class", "value").html("информация закрыта");
+		}
+		
 
-		li_left.append("div").attr("class", "left").html(caption);
+		/*li_left.append("div").attr("class", "left").html(caption);
 
 		if(value && link) {
 			li_left.append("div").attr("class", "right").html('<a target="_blank" href="' + link + '">' + value + '</a>');
@@ -381,7 +412,7 @@ $(function(){
 			li_left.append("div").attr("class", "right").html(value);
 		} else {
 			li_left.append("div").attr("class", "right").html("информация закрыта");
-		}
+		}*/
 	}
 
 	/* раскрытие списка атрибутов */

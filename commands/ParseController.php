@@ -10,8 +10,8 @@ namespace app\commands;
 
 use Yii;
 use yii\console\Controller;
-use app\models\Locality;
 use app\modules\map\models\Poiskstroek;
+use app\modules\map\models\ImportExcel;
 
 class ParseController extends Controller
 {
@@ -47,5 +47,19 @@ class ParseController extends Controller
 		$model = new Poiskstroek();
 		
 		$model->cachePoiskstroekData();
+	}
+	
+	public function actionAttribute($file, $list)
+	{
+		$excel = new ImportExcel($file, ['setFirstRecordAsKeys' => false]);
+		
+		//$excel->getData($list-1);
+		$excel->importExcelData($list-1);
+	}
+	
+	public function actionTest()
+	{
+		$model = new Poiskstroek();
+		$model->test();
 	}
 }
