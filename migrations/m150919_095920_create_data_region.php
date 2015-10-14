@@ -7,7 +7,11 @@ class m150919_095920_create_data_region extends Migration
 {
     public function safeUp()
     {
-        $this->createTable('{{%locality}}', [
+		$this->execute("CREATE SCHEMA map;");
+		
+		$this->execute("SET search_path TO map");
+		
+		$this->createTable('{{%locality}}', [
             'id' => $this->primaryKey(),
             'level' => $this->integer(1),
             'kld_subjcode' => $this->integer(2),
@@ -32,11 +36,12 @@ class m150919_095920_create_data_region extends Migration
             'created' => $this->timestamp()->notNull(),
             'updated' => $this->timestamp()->notNull(),
         ]);
+		
+		$this->execute("SET search_path TO public");
     }
 
     public function safeDown()
     {
-        $this->dropTable('{{%locality}}');
-        $this->dropTable('{{%poiskstroek_data}}');
+		$this->execute("DROP SCHEMA map CASCADE;");
     }
 }
