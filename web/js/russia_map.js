@@ -6,6 +6,8 @@ $(function(){
 	window.data = null;
 	window.parent = null;
 	
+	window.timer = 0;
+	
 	var myArr = new Object();
 	
 	/* переводим координаты в проекцию albers с уже заданных масштабированием, смещением, и т.д. (наиболее подходящая) */
@@ -51,9 +53,12 @@ $(function(){
 		.style("display", "none");
 		
 	var last = 0;
+	
+	queue()
+		.defer(d3.json, "/json/map/russia_final.json")
+		.await(ready);
 		
-	/* получаем json данные от сервера */
-	d3.json("/json/map/russia_final.json", function (error, russia) {
+	function ready(error, russia) {
 		if (error) {
 			console.log(error);
 			return;
@@ -77,7 +82,8 @@ $(function(){
 			.on("mouseout", hideTooltip)
 			.on("click", select)
 			.on("dblclick", ZoomIn)
-			.on("touchstart", select_touch);
+			.on("touchstart", select_touch)
+			.on("touchend", end_touch);
 			
 		/* рисуем границы округов */
 		group_boundary.selectAll(".boundary").data(boundary).enter()
@@ -122,7 +128,12 @@ $(function(){
 			.style("display", function(d){ return (d.properties.place == "federal" || d.properties.strategy) ? "block" : "none";});
 		
 		renderLegend();
-	});
+	}
+		
+	/* получаем json данные от сервера */
+	//d3.json("/json/map/russia_final.json", function (error, russia) {
+	//	
+	//});
 	
 	/* приближения карты колесиком */
 	function scrollZoom() {
@@ -260,8 +271,14 @@ $(function(){
 	}
 	
 	function select_touch(d) {
+		window.timer = d3.event.timeStamp;
+	}
+	
+	function end_touch(d) {
+		console.log(d3.event.timeStamp - window.timer);
+		
 		var event = null
-		if ((d3.event.timeStamp - last) < 400) {
+		if ((d3.event.timeStamp - window.timer) > 400) {
 			event = 2;
 		}
 		
@@ -363,11 +380,9 @@ $(function(){
 		{
 			
 			if(progress == 'u'){
-				console.log(progress);
 				progress = "up";
 			} 
 			else if(progress == 'd'){
-				console.log(progress);
 				progress = "down";
 			}
 			

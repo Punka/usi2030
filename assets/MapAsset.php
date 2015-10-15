@@ -14,7 +14,8 @@ class MapAsset extends AssetBundle
     public $js = [
 		'js/d3js.js',
 		'js/topojson.js',
-		'js/russia_map.js'
+		'http://d3js.org/queue.v1.min.js',
+		'js/russia_map.js',
     ];
     public $depends = [
         'yii\web\YiiAsset',
