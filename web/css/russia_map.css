@@ -134,21 +134,26 @@ svg {
 }
 
 .region {
-	fill: #ffffdd;
-	stroke: #226688;
+	//fill: #ffffdd;
+	fill: #d1d7dc;
+	//stroke: #226688;
+	stroke: #60666b;
 	opacity: .60;
 }
 
 .boundary {
 	fill: none;
-	stroke: #226688;
+	//stroke: #226688;
+	stroke: #60666b;
 	opacity: .60;
 }
 
 .district {
 	display: none;
-	fill: #ffffdd;
-	stroke: red;
+	fill: #d1d7dc;
+	stroke: #60666b;
+	//fill: #ffffdd;
+	//stroke: red;
 	opacity: .60;
 }
 
@@ -171,7 +176,8 @@ svg {
 }
 
 .region:hover, .region.active, .district:hover, .district.active {
-	fill: bisque;
+	//fill: bisque;
+	fill: #a1d568;
 }
 
 .city path:hover, .city path.active {
