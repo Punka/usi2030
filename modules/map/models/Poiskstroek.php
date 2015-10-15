@@ -115,17 +115,16 @@ class Poiskstroek {
 				$this->data[$row['kladr_code']]['design_companies'] = $arr['design_companies'];
 				$this->data[$row['kladr_code']]['img'] = $arr['img'];
 				
-				if($attributes = Attribute::find()->where(['kladr_code' => $arr['kladr_code']])->andWhere("date >= '2015-01-01'")->with('attrType','measure')->all())
+				if($attributes = Attribute::find()->where(['kladr_code' => $arr['kladr_code']])->with('attrType','measure')->orderBy("date ASC")->all())
 				{
 					foreach($attributes as $attr)
 					{
 						$progress = "";
 						if($attr->progress == 'd' or $attr->progress == 'u') $progress = $attr->progress;
 						
-						//$this->data[$row['kladr_code']][$attr->attrType->alias] = $attr->value;
-						$arr['attributes'][] = $attr->attrType->name . ":" . date("d.m.Y", strtotime($attr->date)) . ":" . $attr->value . ":" . $attr->measure->name . ":" . $progress;
+						$arr['attributes'][$attr->attrType->name] = $attr->attrType->name . ":" . date("d.m.Y", strtotime($attr->date)) . ":" . $attr->value . ":" . $attr->measure->name . ":" . $progress;
 					}
-					
+					$arr['attributes'] = array_values($arr['attributes']);
 				}
 				
 				if($row['name'] == 'Сургут')
