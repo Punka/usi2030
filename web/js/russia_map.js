@@ -138,7 +138,7 @@ $(function(){
 	/* приближения карты колесиком */
 	function scrollZoom() {
 		/* запрещаем зумминг для первого уровня */
-		if(window.level == 1) return;
+		//if(window.level == 1) return;
 		
 		/* получаем текущее смещение и масштаб */
 		var t = d3.event.translate;
@@ -185,7 +185,7 @@ $(function(){
 		group_russia.transition().duration(750).call(zoom.translate(translate).scale(scale).event);
 		
 		/* запомнить начальное состояние масштаба субъекта */
-		zoom.scaleExtent([scale, 1000]);
+		zoom.scaleExtent([scale, 100]);
 	}
 	
 	/* сброс приближения (zoom out) */
@@ -205,10 +205,13 @@ $(function(){
 		update(100);
 		
 		/* масштабируем в исходное состояние с продолжительность 750 мс */
-		group_russia.transition().duration(750).call(zoom_reset.translate([0, 0]).scale(1).event);
+		group_russia.transition().duration(750).call(zoom.translate([0, 0]).scale(1).event);
 
 		/* при масштабировании размер маркеров (городов) не изменяется */
 		group_city.selectAll(".city path").attr('d', path.pointRadius(5)).style("stroke-width", 2);
+		
+		/* запомнить начальное состояние масштаба субъекта */
+		zoom.scaleExtent([1, 100]);
 	}
 	
 	/* отобразить всплываещую подсказку */
