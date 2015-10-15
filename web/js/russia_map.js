@@ -55,7 +55,7 @@ $(function(){
 	var last = 0;
 	
 	queue()
-		.defer(d3.json, "/json/map/russia_final.json")
+		.defer(d3.json, "/json/map/russia_final_test.json")
 		.await(ready);
 		
 	function ready(error, russia) {
