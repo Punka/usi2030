@@ -148,11 +148,6 @@ $(function(){
 			.style("display", function(d){ return (d.properties.place == "federal" || d.properties.strategy) ? "block" : "none";});
 		
 	}
-		
-	/* получаем json данные от сервера */
-	//d3.json("/json/map/russia_final.json", function (error, russia) {
-	//	
-	//});
 	
 	/* приближения карты колесиком */
 	function scrollZoom() {
@@ -179,6 +174,8 @@ $(function(){
 	
 	/* приближение по ширине региона через двойной клик (zoom in) */
 	function ZoomIn(d) {
+		if(d3.selectAll("#district .district")[0][0] == undefined) return;
+		
 		window.parent = window.data;
 		group_russia.classed("fix", false);
 		
@@ -439,17 +436,6 @@ $(function(){
 			li_left.append("div").attr("class", "date").html(date);
 			li_left.append("div").attr("class", "value").html("информация закрыта");
 		}
-		
-
-		/*li_left.append("div").attr("class", "left").html(caption);
-
-		if(value && link) {
-			li_left.append("div").attr("class", "right").html('<a target="_blank" href="' + link + '">' + value + '</a>');
-		} else if(value){
-			li_left.append("div").attr("class", "right").html(value);
-		} else {
-			li_left.append("div").attr("class", "right").html("информация закрыта");
-		}*/
 	}
 
 	/* раскрытие списка атрибутов */
