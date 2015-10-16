@@ -1,17 +1,282 @@
+@media screen and (max-width:600px) {
+    /* Селекторы */
+	svg {
+		margin: 0;
+	}
+	
+	#header .header-title {
+		color: #303030;
+		display: table-cell;
+		vertical-align: middle;
+		font-size: 14px;
+		padding-left: 10px;
+	}
+	
+	#header .flag {
+		padding-left: 10px;
+		height: 25px;
+	}
+	
+	#header .back {
+		height: 35px;
+	}
+	
+	#footer .footer-left, #footer .footer-right {
+		display: block;
+		width: 100%;
+	}
+	
+	#footer .footer-title {
+		font-size: 12px;
+		list-style-type: none;
+		padding: 0 15px;
+		text-transform: uppercase;
+
+		overflow: hidden;
+		height: 150px;
+	}
+	
+	text {
+		font-size: 10px;
+	}
+}
+
+@media screen and (min-width:600px) {
+    /* Селекторы */
+	svg {
+		//margin-top: 85px;
+	}
+	
+	#header .header-title {
+		color: #303030;
+		display: table-cell;
+		vertical-align: middle;
+		font-size: 20px;
+		padding-left: 10px;
+	}
+	
+	#header .flag {
+		padding-left: 10px;
+		height: 35px;
+	}
+	
+	#header .back {
+		height: 45px;
+	}
+	
+	#footer {
+		display: table;
+		width: 100%;
+	}
+	
+	#footer .inform {
+		display: table;
+		width: 100%;
+	}
+	
+	#footer .footer-left, #footer .footer-right {
+		display: table-cell;
+		width: 50%;
+	}
+	
+	#footer .footer-title {
+		//font-size: 16px;
+		font-size: 85%;
+		list-style-type: none;
+		padding: 0 15px;
+		text-transform: uppercase;
+
+		overflow: hidden;
+		height: 150px;
+	}
+	
+	text {
+		font-size: 70%;
+	}
+}
+
+
+@media screen and (min-width:960px) {
+    /* Селекторы */
+	svg {
+		//margin-top: 85px;
+	}
+	
+	#header .header-title {
+		color: #303030;
+		display: table-cell;
+		vertical-align: middle;
+		font-size: 30px;
+		padding-left: 10px;
+	}
+	
+	#header .flag {
+		padding-left: 10px;
+		height: 55px;
+	}
+	
+	#header .back {
+		height: 65px;
+	}
+	
+	#footer {
+		display: table;
+		width: 100%;
+	}
+	
+	#footer .inform {
+		display: table;
+		width: 100%;
+		margin: 0 auto;
+	}
+	
+	#footer .footer-left, #footer .footer-right {
+		display: table-cell;
+		width: 50%;
+	}
+	
+	#footer .footer-title {
+		//font-size: 16px;
+		font-size: 135%;
+		list-style-type: none;
+		padding: 0 15px;
+		text-transform: uppercase;
+
+		overflow: hidden;
+		height: 165px;
+	}
+	
+	text {
+		font-size: 100%;
+	}
+}
+
+@media screen and (min-width:1150px) {
+    /* Селекторы */
+	svg {
+		//margin-top: 85px;
+	}
+	
+	#header .header-title {
+		color: #303030;
+		display: table-cell;
+		vertical-align: middle;
+		font-size: 30px;
+		padding-left: 10px;
+	}
+	
+	#header .flag {
+		padding-left: 10px;
+		height: 55px;
+	}
+	
+	#header .back {
+		height: 65px;
+	}
+	
+	#footer {
+		display: table;
+		width: 100%;
+	}
+	
+	#footer .inform {
+		display: table;
+		width: 80%;
+		margin: 0 auto;
+	}
+	
+	#footer .footer-left, #footer .footer-right {
+		display: table-cell;
+		width: 50%;
+	}
+	
+	#footer .footer-title {
+		//font-size: 16px;
+		font-size: 135%;
+		list-style-type: none;
+		padding: 0 15px;
+		text-transform: uppercase;
+
+		overflow: hidden;
+		height: 165px;
+	}
+	
+	text {
+		font-size: 130%;
+	}
+}
+
+@media screen and (min-width:1400px) {
+    /* Селекторы */
+	svg {
+		//margin-top: 85px;
+	}
+	
+	#header .header-title {
+		color: #303030;
+		display: table-cell;
+		vertical-align: middle;
+		font-size: 30px;
+		padding-left: 10px;
+	}
+	
+	#header .flag {
+		padding-left: 10px;
+		height: 55px;
+	}
+	
+	#header .back {
+		height: 65px;
+	}
+	
+	#footer {
+		display: table;
+		width: 100%;
+	}
+	
+	#footer .inform {
+		display: table;
+		width: 65%;
+		margin: 0 auto;
+	}
+	
+	#footer .footer-left, #footer .footer-right {
+		display: table-cell;
+		width: 50%;
+	}
+	
+	#footer .footer-title {
+		//font-size: 16px;
+		font-size: 135%;
+		list-style-type: none;
+		padding: 0 15px;
+		text-transform: uppercase;
+
+		overflow: hidden;
+		height: 165px;
+	}
+	
+	text {
+		font-size: 130%;
+	}
+}
+
 * {
 	padding: 0;
     margin: 0;
 }
 
-svg {
-	margin-top: 85px;
+.container {
+	width: 100% !important;
 }
+
+
 
 #map {
 	background-color: #ddeeff;
 	//background-color: #f4f4f4;
 	font: bold 12px Trebuchet MS;
-	width: 1000px;
+	width: 100%;
 }
 
 #header {
@@ -20,39 +285,6 @@ svg {
 	margin-top: 10px;
 	left: 0;
 	top: 0;
-}
-
-#header .flag {
-	padding-left: 10px;
-	height: 55px;
-}
-
-#header .header-title {
-	color: #303030;
-    display: table-cell;
-    vertical-align: middle;
-    font-size: 30px;
-	padding-left: 10px;
-}
-
-#footer, #footer .inform {
-    display: table;
-    width: 100%;
-}
-
-#footer .footer-left, #footer .footer-right {
-    display: table-cell;
-    width: 50%;
-}
-
-#footer .footer-title {
-    font-size: 16px;
-	list-style-type: none;
-    padding: 0 15px;
-    text-transform: uppercase;
-
-    overflow: hidden;
-    height: 150px;
 }
 
 #footer .footer-title .left {
@@ -86,7 +318,8 @@ svg {
 
 #footer li .left, #footer li .right {
     display: table-cell;
-    font-size: 16px;
+    //font-size: 16px;
+	font-size: 135%;
     font-weight: normal;
     text-transform: none;
     line-height: 1.3;
@@ -109,7 +342,8 @@ svg {
     color: #fff;
     cursor: pointer;
     display: table;
-    font-size: 16px;
+    //font-size: 16px;
+	//font-size: 135%;
     font-weight: normal;
     margin: 15px auto;
     padding: 5px 40px;
@@ -204,7 +438,7 @@ path {
 
 .attribute .date {
     color: darkcyan;
-	font-size: 12px;
+	//font-size: 12px;
 	font-weight: normal;
 	margin-top: 4px;
 	text-align: center;
