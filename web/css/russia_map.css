@@ -9,6 +9,7 @@ svg {
 
 #map {
 	background-color: #ddeeff;
+	//background-color: #f4f4f4;
 	font: bold 12px Trebuchet MS;
 	width: 1000px;
 }
@@ -131,6 +132,10 @@ svg {
     box-shadow: 0px 0px 2px 0px #a6a6a6;
     opacity: 0.8;
     position: absolute;
+}
+
+path {
+	cursor: pointer;
 }
 
 .region {

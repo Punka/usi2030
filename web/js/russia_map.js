@@ -55,10 +55,17 @@ $(function(){
 	var last = 0;
 	
 	queue()
-		.defer(d3.json, "/json/map/russia_final_test.json")
+		//.defer(d3.json, "/json/map/russia_final_test.json")
+		.defer(d3.json, "/json/test/topo_boundary.json")
+		.defer(d3.json, "/json/test/topo_region.json")
+		.defer(d3.json, "/json/test/topo_city.json")
 		.await(ready);
 		
-	function ready(error, russia) {
+	queue()
+		.defer(d3.json, "/json/test/topo_district.json")
+		.await(ready_2);
+		
+	function ready(error, boundary, region, city) {
 		if (error) {
 			console.log(error);
 			return;
@@ -68,10 +75,9 @@ $(function(){
 		update(100);
 		
 		/* группируем данные по типам */
-		var boundary = topojson.feature(russia, russia.objects.boundary).features;
-		var region = topojson.feature(russia, russia.objects.region).features;
-		var district = topojson.feature(russia, russia.objects.district).features;
-		var city = topojson.feature(russia, russia.objects.city).features;
+		var boundary = topojson.feature(boundary, boundary.objects.boundary).features;
+		var region = topojson.feature(region, region.objects.region).features;
+		var city = topojson.feature(city, city.objects.city).features;
 		
 		/* рисуем все регионы */
 		group_region.selectAll(".region").data(region).enter()
@@ -92,15 +98,6 @@ $(function(){
 			.attr("d", path)
 			.attr("stroke-width", 1.2);
 		
-		/* рисуем все районы */
-		group_district.selectAll(".district").data(district).enter()
-			.append("path")
-			.attr("class", function(d){return "district reg_id_" + d.properties.kld_subjcode})
-			.attr('d', path)
-			.on("mousemove", showTooltip)
-			.on("mouseout", hideTooltip)
-			.on("click", select);
-			
 		/* рисуем все города */
 		var g_city = group_city.selectAll(".city")
 			.data(city)
@@ -128,6 +125,25 @@ $(function(){
 			.style("display", function(d){ return (d.properties.place == "federal" || d.properties.strategy) ? "block" : "none";});
 		
 		renderLegend();
+	}
+	
+	function ready_2(error, district) {
+		if (error) {
+			console.log(error);
+			return;
+		}
+		
+		/* группируем данные по типам */
+		var district = topojson.feature(district, district.objects.district).features;
+		
+		/* рисуем все районы */
+		group_district.selectAll(".district").data(district).enter()
+			.append("path")
+			.attr("class", function(d){return "district reg_id_" + d.properties.kld_subjcode})
+			.attr('d', path)
+			.on("mousemove", showTooltip)
+			.on("mouseout", hideTooltip)
+			.on("click", select);
 	}
 		
 	/* получаем json данные от сервера */
