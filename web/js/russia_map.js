@@ -11,18 +11,8 @@ $(function(){
 	var myArr = new Object();
 	
 	/* переводим координаты в проекцию albers с уже заданных масштабированием, смещением, и т.д. (наиболее подходящая) */
-	if(screen.width < 600)
-	{
-		var height = screen.height/2;
-		var projection = d3.geo.albers().rotate([-105, 0]).center([-10, 65]).parallels([52, 64]).scale(Math.max(width / 1.4, height / 1.4)).translate([width / 2, height / 2]);
-	}
-	else
-	{
-		var height = screen.height/1.5;
-		var projection = d3.geo.albers().rotate([-105, 0]).center([-10, 65]).parallels([52, 64]).scale(Math.max(width / 1.8, height / 1.8)).translate([width / 2, height / 2]);
-	}
-	
-	
+	var height = screen.height/1.5;
+	var projection = d3.geo.albers().rotate([-105, 0]).center([-10, 65]).parallels([52, 64]).scale(Math.max(width / 1.8, height / 1.8)).translate([width / 2, height / 2]);
 	
 	/* преобразуем географич. координаты в координаты понятные SVG */
 	var path = d3.geo.path().projection(projection).pointRadius(5);
@@ -99,8 +89,7 @@ $(function(){
 			.on("mouseout", hideTooltip)
 			.on("click", select)
 			.on("dblclick", ZoomIn)
-			.on("touchstart", select_touch)
-			.on("touchend", end_touch);
+			.on("touchstart", select_touch);
 			
 		/* рисуем границы округов */
 		group_boundary.selectAll(".boundary").data(boundary).enter()
@@ -258,7 +247,7 @@ $(function(){
 		/* отображаем подсказку и именем */
 		tooltip.style("display", "block")
 			.style("left", (mouse[0] - 10) + "px")
-			.style("top", (mouse[1] + 45) + "px")
+			.style("top", (mouse[1]) - 40 + "px")
 			.html(window.data.name);
 		
 		if(group_russia.classed("fix") == false) {
@@ -301,14 +290,10 @@ $(function(){
 	}
 	
 	function select_touch(d) {
-		window.timer = d3.event.timeStamp;
-	}
-	
-	function end_touch(d) {
 		console.log(d3.event.timeStamp - window.timer);
 		
 		var event = null
-		if ((d3.event.timeStamp - window.timer) > 400) {
+		if ((d3.event.timeStamp - window.timer) < 400) {
 			event = 2;
 		}
 		
@@ -335,7 +320,7 @@ $(function(){
 			}
 		}
 		
-		last = d3.event.timeStamp;
+		window.timer = d3.event.timeStamp;
 	}
 	
 	/* отмена селекта */
