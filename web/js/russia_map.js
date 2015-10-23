@@ -458,7 +458,10 @@ $(function(){
 				renderFooter(myArr[kladr_code]);
 			}
 		} else {
-			d3.json("/map/default/data/" + kladr_code, function(error, data) {
+			var d = new Date();
+			var time = d.getTime();
+			
+			d3.json("/map/default/data/" + kladr_code + '/t/' + time, function(error, data) {
 				if (error) {
 					console.log(error);
 					return;

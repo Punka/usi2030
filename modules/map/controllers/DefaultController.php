@@ -21,7 +21,7 @@ class DefaultController extends Controller
         return $this->render('index');
     }
     
-    public function actionData($id = null)
+    public function actionData($id = null, $t = null)
     {
 		$cache = Yii::$app->cache;
 			
@@ -47,7 +47,7 @@ class DefaultController extends Controller
     {
         set_time_limit(0);
         
-        $json = json_decode(file_get_contents($_SERVER['DOCUMENT_ROOT'] . "/json/map/russia_fix_2.json"), true);
+        $json = json_decode(file_get_contents($_SERVER['DOCUMENT_ROOT'] . "/json/map/russia_final_medium.json"), true);
         
         $json_regions = $json['objects']['region']['geometries'];
         $json_districts = $json['objects']['district']['geometries'];
@@ -59,7 +59,7 @@ class DefaultController extends Controller
             {
                 $value = mb_strtolower($json_districts[$i]['properties']['name'], 'utf-8');
 
-                $kld_subjcode = $json_districts[$i]['properties']['kld_subjcode'];
+                $kld_subjcode = $json_districts[$i]['properties']['kladr_code'];
 
                 if(preg_match('/район/usi', $value))
                 {
@@ -104,7 +104,7 @@ class DefaultController extends Controller
             {
                 $value = mb_strtolower($json_city[$i]['properties']['name'], 'utf-8');
             
-                $kld_subjcode = $json_city[$i]['properties']['kld_subjcode'];
+                $kld_subjcode = $json_city[$i]['properties']['kladr_code'];
                 
                 unset($json['objects']['city']['geometries'][$i]['properties']['kladr_code']);
                 unset($json['objects']['city']['geometries'][$i]['properties']['kld_regcode']);
