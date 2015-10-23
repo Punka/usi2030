@@ -98,7 +98,7 @@ $(function(){
 			.attr("d", path)
 			.attr("stroke-width", 1.2);
 		
-		
+		renderVerionInfo("Тестовая версия для компьютеров");
 		renderLegend();
 	}
 	
@@ -508,5 +508,9 @@ $(function(){
 			.attr("x", 50)
 			.attr("y", function(d, i){ return height - (i*ls_h) - ls_h - 4;})
 			.text(function(d, i){ return legend_labels[i]; });
+	}
+	
+	function renderVerionInfo(text) {
+		d3.select("#map").append("p").attr("class", "verion_info").html(text);
 	}
 });

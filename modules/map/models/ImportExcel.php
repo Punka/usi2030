@@ -316,27 +316,34 @@ class ImportExcel
 						else $progress = "n";
 					}
 				}
-				
-				$model = new Attribute();
-				$model->attr_type_id = $attr_type_id;
-				$model->kladr_code = strval($kladr_code);
-				$model->value = $value;
-				$model->measure_id = $measure_id;
-				$model->date = $this->correct_date($date);
-				$model->created = new Expression('NOW()');
-				$model->updated = new Expression('NOW()');
-				$model->progress = $progress;
-				
-				if($model->save())
+				elseif(strpos($data[$b], '%'))
 				{
-					echo "Добавлен новый атрибут: " . $attr_type_id . "\n";
-					Yii::info("Добавлен новый атрибут: " . $attr_type_id . "\n");
+					$progress = ($value > 0) ? 'u' : 'd';
 				}
-				else
+				
+				if($value != 0)
 				{
-					echo "Ошибка! Атрибут: " . $attr_type_id. ", не добавлен\n";
-					Yii::error("Ошибка! Атрибут: " . $attr_type_id. ", не добавлен\n");
-					die();
+					$model = new Attribute();
+					$model->attr_type_id = $attr_type_id;
+					$model->kladr_code = strval($kladr_code);
+					$model->value = $value;
+					$model->measure_id = $measure_id;
+					$model->date = $this->correct_date($date);
+					$model->created = new Expression('NOW()');
+					$model->updated = new Expression('NOW()');
+					$model->progress = $progress;
+					
+					if($model->save())
+					{
+						echo "Добавлен новый атрибут: " . $attr_type_id . "\n";
+						Yii::info("Добавлен новый атрибут: " . $attr_type_id . "\n");
+					}
+					else
+					{
+						echo "Ошибка! Атрибут: " . $attr_type_id. ", не добавлен\n";
+						Yii::error("Ошибка! Атрибут: " . $attr_type_id. ", не добавлен\n");
+						die();
+					}
 				}
 			}
 		}
@@ -374,7 +381,8 @@ class ImportExcel
 			if(count($arr) > 1)
 			{
 				if(strlen($arr[2]) == 2) $arr[2] = "20" . $arr[2];
-				$arr = implode('-', $arr);
+				//$arr = implode('-', $arr);
+				$arr = $arr[2] . '-' . $arr[0] . '-' . $arr[1];
 				return date('Y-m-d', strtotime($arr));
 			}
 			else
@@ -388,6 +396,7 @@ class ImportExcel
 	{
 		$val = str_replace(' ', '', $val);
 		$val = str_replace(',', '.', $val);
+		$val = str_replace('%', '', $val);
 		$val = preg_replace("/[^0-9\.\-\+]/i", "$1", $val);
 		$val = number_format($val, 2, ".", " ");
 		

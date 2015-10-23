@@ -115,7 +115,7 @@ class Poiskstroek {
 				$this->data[$row['kladr_code']]['design_companies'] = $arr['design_companies'];
 				$this->data[$row['kladr_code']]['img'] = $arr['img'];
 				
-				if($attributes = Attribute::find()->where(['kladr_code' => $arr['kladr_code']])->with('attrType','measure')->orderBy("date ASC")->all())
+				if($attributes = Attribute::find()->joinWith(['attrType', 'measure'])->where(['kladr_code' => $arr['kladr_code'], 'attribute_type.status' => TRUE])->orderBy("id ASC, date ASC")->all())
 				{
 					foreach($attributes as $attr)
 					{

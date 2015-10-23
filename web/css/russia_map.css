@@ -461,3 +461,12 @@ path {
 	color: red;
 	font-size: 12px;
 }
+
+.verion_info {
+	cursor: context-menu;
+	font-size: 15px;
+	opacity: .95;
+	position: absolute;
+    top: 15px;
+    right: 20px;
+}
