@@ -49,6 +49,11 @@ class ParseController extends Controller
 		$model->cachePoiskstroekData();
 	}
 	
+	public function actionCacheFlush()
+	{
+		Yii::$app->cache->flush();
+	}
+	
 	public function actionAttribute($file, $list)
 	{
 		$excel = new ImportExcel($file, ['setFirstRecordAsKeys' => false]);
