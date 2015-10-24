@@ -1,6 +1,7 @@
 $(function(){
 	/* настройки */
-	var width = screen.width;
+	var width = parseInt(d3.select("#map").style("width"));
+	var height = width/2;
 	
 	window.level = 1;
 	window.data = null;
@@ -11,8 +12,7 @@ $(function(){
 	var myArr = new Object();
 	
 	/* переводим координаты в проекцию albers с уже заданных масштабированием, смещением, и т.д. (наиболее подходящая) */
-	var height = screen.height/1.5;
-	var projection = d3.geo.albers().rotate([-105, 0]).center([-10, 65]).parallels([52, 64]).scale(Math.max(width / 1.8, height / 1.8)).translate([width / 2, height / 2]);
+	var projection = d3.geo.albers().rotate([-105, 0]).center([-10, 65]).parallels([52, 64]).scale(Math.max(width / 1.5, height / 1.5)).translate([width / 2, height / 2]);
 	
 	/* преобразуем географич. координаты в координаты понятные SVG */
 	var path = d3.geo.path().projection(projection).pointRadius(5);

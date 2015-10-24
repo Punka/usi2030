@@ -16,9 +16,16 @@ class DefaultController extends Controller
         return parent::beforeAction($action);
     }
 
-    public function actionIndex()
+    public function actionIndex($width = null)
     {
-        return $this->render('index');
+		if(isset($width))
+		{
+			return $this->render('index', ['width' => $width]);
+		}
+		else
+		{
+			return $this->render('index');
+		}
     }
     
     public function actionData($id = null, $t = null)
